@@ -58,4 +58,9 @@ jobs:
             exit 0
           fi
           git commit -m "Add locally hosted Stockfish 19 engine files"
+
+          # Keep the push safe if the app files are updated while this job
+          # downloads the engine binaries.
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
