@@ -10,13 +10,6 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <title>Chess Study Pro — анализ позиций</title>
-<script type="importmap">
-{
-  "imports": {
-    "onnxruntime-web/wasm": "https://esm.sh/onnxruntime-web@1.26.0/wasm"
-  }
-}
-</script>
 <style>
 :root{--bg:#0e141b;--panel:#17212c;--panel2:#1e2b38;--text:#edf3f8;--muted:#9aabba;--accent:#7bc4ff;--accent2:#a4e0bc;--light:#e6e2d5;--dark:#73918a;--line:#304151;--danger:#ff9b9b}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1a2a38 0,#0e141b 55%);color:var(--text);font:15px/1.45 Segoe UI,Arial,sans-serif;min-height:100vh}
@@ -272,26 +265,19 @@ function drawPlannerCanvas(){
 async function getChessRecognizer(){
  if(!chessVisionPromise){
   chessVisionPromise=(async()=>{
-   setStatus('Загружаю распознавание шахматной доски (первый запуск может занять несколько секунд)…','loading');
-   let mod=null,lastError=null;
-   const moduleUrls=[
-    'https://esm.sh/@scoriiu/fenshot@0.1.5?bundle&external=onnxruntime-web',
-    'https://cdn.jsdelivr.net/npm/@scoriiu/fenshot@0.1.5/+esm'
-   ];
-   for(const url of moduleUrls){
-    try{mod=await import(url);if(typeof mod.createRecognizer==='function')break;mod=null;}
-    catch(err){lastError=err;}
+   setStatus('Загружаю локальное распознавание шахматной доски…','loading');
+   const moduleUrl=new URL('./recognition/fenshot.bundle.js',location.href).href;
+   const mod=await import(moduleUrl);
+   if(typeof mod.createRecognizer!=='function'||typeof mod.resolveOrientation!=='function'||typeof mod.placementToFen!=='function'){
+    throw new Error('Локальный модуль распознавания загружен некорректно. Обнови приложение и попробуй ещё раз.');
    }
-   if(!mod||typeof mod.createRecognizer!=='function'||typeof mod.resolveOrientation!=='function'||typeof mod.placementToFen!=='function'){
-    throw new Error('Не удалось загрузить модуль распознавания с CDN. Проверь подключение к интернету/VPN. '+(lastError?.message||''));
-   }
-   const makeRecognizer=(host)=>mod.createRecognizer({
-    modelUrl:host+'/@scoriiu/fenshot@0.1.5/model/chess-tiles-v2.onnx',
-    wasmPaths:host+'/onnxruntime-web@1.26.0/dist/'
+   const assetBase=new URL('./recognition/',location.href).href;
+   const recognizer=mod.createRecognizer({
+    modelUrl:new URL('chess-tiles-v2.onnx',assetBase).href,
+    wasmPaths:assetBase
    });
    chessVision={
-    recognizer:makeRecognizer('https://cdn.jsdelivr.net/npm'),
-    fallback:()=>makeRecognizer('https://unpkg.com'),
+    recognizer,
     resolveOrientation:mod.resolveOrientation,
     placementToFen:mod.placementToFen
    };
