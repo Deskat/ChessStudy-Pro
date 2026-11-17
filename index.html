@@ -388,7 +388,7 @@ function ensureEngine(){
  const variant=$('engineVariant').value;
  const engineLabel=variant==='lite'?'Stockfish 19 Lite':'Stockfish 19 Full';
  const engineFile=variant==='lite'?'stockfish-19-lite-single.js':'stockfish-19-single.js';
- const engineBase='new URL('./engine/', location.href).href;';
+ const engineBase=new URL('./engine/', location.href).href;
  setStatus('Загружаю '+engineLabel+' для iPhone. '+(variant==='lite'?'Загрузка около 1,7 МБ.':'Загрузка около 94 МБ; на медленном интернете это может занять время.'),'loading');
  $('engineVariant').disabled=true;
  return new Promise(async (resolve,reject)=>{
