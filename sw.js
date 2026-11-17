@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-study-pro-iphone-v5';
+const CACHE_NAME = 'chess-study-pro-iphone-v6';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', event => {
@@ -24,10 +24,24 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Engine binaries can be large (Full WASM is ~99 MB). Keep them on the
-  // normal same-origin network path instead of copying them into CacheStorage.
+  // Cache the small Lite build after its first successful download so
+  // installed iPhone users can still analyze offline. Full is ~99 MB and
+  // remains network-only to avoid filling the device's cache quota.
   if (url.pathname.includes('/engine/')) {
-    event.respondWith(fetch(request));
+    const isLiteAsset = /\/engine\/stockfish-19-lite-single\.(js|wasm)$/.test(url.pathname);
+    if (!isLiteAsset) {
+      event.respondWith(fetch(request));
+      return;
+    }
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async cache => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        const response = await fetch(request);
+        if (response && response.ok) await cache.put(request, response.clone());
+        return response;
+      })
+    );
     return;
   }
 
