@@ -46,6 +46,69 @@ jobs:
           test "$(wc -c < engine/stockfish-19-lite-single.wasm)" -eq 1845971
           test "$(wc -c < engine/stockfish-19-single.wasm)" -eq 99169054
 
+      - name: Set up Node.js for engine smoke tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Smoke-test Lite and Full Stockfish with UCI
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const path = require("node:path");
+
+          async function smokeTest(file) {
+            const factory = require(path.resolve(file));
+            if (typeof factory !== "function") {
+              throw new Error(file + " did not export the Stockfish factory.");
+            }
+
+            await new Promise((resolve, reject) => {
+              const engine = factory();
+              let searched = false;
+              let finished = false;
+              const timer = setTimeout(() => finish(new Error(file + " timed out.")), 45000);
+
+              function finish(error) {
+                if (finished) return;
+                finished = true;
+                clearTimeout(timer);
+                try { engine.processCommand("quit"); } catch (_) {}
+                if (error) reject(error);
+                else resolve();
+              }
+
+              engine.listener = (line) => {
+                if (line === "uciok") {
+                  engine.processCommand("isready");
+                } else if (line === "readyok" && !searched) {
+                  searched = true;
+                  engine.processCommand("position startpos");
+                  engine.processCommand("go depth 5");
+                } else if (line.startsWith("bestmove ")) {
+                  if (!/^bestmove [a-h][1-8][a-h][1-8][qrbn]?(?: |$)/.test(line)) {
+                    finish(new Error(file + " returned an invalid bestmove: " + line));
+                  } else {
+                    console.log(file + " OK: " + line);
+                    finish();
+                  }
+                }
+              };
+
+              engine.processCommand("uci");
+            });
+          }
+
+          (async () => {
+            await smokeTest("./engine/stockfish-19-lite-single.js");
+            await smokeTest("./engine/stockfish-19-single.js");
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
       - name: Build local screenshot-recognition assets
         shell: bash
         run: |
