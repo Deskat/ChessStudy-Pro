@@ -398,22 +398,14 @@ function ensureEngine(){
     if(settled)return;settled=true;cleanup();
     if(engine){try{engine.terminate();}catch(_){}}
     engine=null;engineReady=false;
-    if(engineBlobUrl){URL.revokeObjectURL(engineBlobUrl);engineBlobUrl=null;}
     $('engineVariant').disabled=false;
     reject(err instanceof Error?err:new Error(String(err||'Не удалось запустить Stockfish.')));
    };
    try{
-    const response=await fetch(engineBase+engineFile,{mode:'cors',cache:'force-cache'});
-    if(!response.ok)throw new Error('CDN не смог загрузить файл движка (HTTP '+response.status+').');
-    const workerSource=await response.text();
-    if(workerSource.length<10000)throw new Error('Получен неполный файл движка. Проверь подключение к интернету.');
-    // Embed the worker script in a same-origin Blob worker. Module.locateFile
-    // points the matching WASM binary to this site's same-origin engine folder; single-thread builds do
-    // not need SharedArrayBuffer or COOP/COEP response headers.
-    const bootstrap='var Module = { locateFile: function(path) { return new URL(path, '+JSON.stringify(engineBase)+').href; } };\n';
-    const blob=new Blob([bootstrap,workerSource],{type:'text/javascript'});
-    engineBlobUrl=URL.createObjectURL(blob);
-    engine=new Worker(engineBlobUrl);
+    // Launch the real same-origin worker file. Stockfish derives the matching
+    // .wasm URL from its own script URL; a Blob worker would lose that path.
+    const workerUrl=new URL(engineFile,engineBase);
+    engine=new Worker(workerUrl.href);
     timer=setTimeout(()=>fail(new Error('Stockfish загружается слишком долго. Проверь интернет и попробуй ещё раз.')),360000);
     engine.onmessage=ev=>{
      const line=String(ev.data);
