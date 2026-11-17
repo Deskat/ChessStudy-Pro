@@ -46,21 +46,47 @@ jobs:
           test "$(wc -c < engine/stockfish-19-lite-single.wasm)" -eq 1845971
           test "$(wc -c < engine/stockfish-19-single.wasm)" -eq 99169054
 
-      - name: Commit engine files to the Pages source branch
+      - name: Build local screenshot-recognition assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          build_dir="$(mktemp -d)"
+          cd "$build_dir"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund --save-exact \
+            esbuild@0.25.12 @scoriiu/fenshot@0.1.5 onnxruntime-web@1.26.0
+
+          out="$GITHUB_WORKSPACE/recognition"
+          mkdir -p "$out"
+          ./node_modules/.bin/esbuild node_modules/@scoriiu/fenshot/dist/index.js \
+            --bundle --format=esm --platform=browser --target=es2022 \
+            --outfile="$out/fenshot.bundle.js"
+
+          cp node_modules/@scoriiu/fenshot/model/chess-tiles-v2.onnx "$out/"
+          cp node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs "$out/"
+          cp node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm "$out/"
+
+          test "$(wc -c < "$out/chess-tiles-v2.onnx")" -eq 1289483
+          test -s "$out/fenshot.bundle.js"
+          test -s "$out/ort-wasm-simd-threaded.mjs"
+          test -s "$out/ort-wasm-simd-threaded.wasm"
+          ls -lh "$out/"
+
+      - name: Commit engine and recognition assets to the Pages source branch
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add engine/
+          git add engine/ recognition/
           if git diff --cached --quiet; then
-            echo "Stockfish engine files are already up to date."
+            echo "Engine and recognition assets are already up to date."
             exit 0
           fi
-          git commit -m "Add locally hosted Stockfish 19 engine files"
+          git commit -m "Add locally hosted Stockfish and screenshot recognition"
 
           # Keep the push safe if the app files are updated while this job
-          # downloads the engine binaries.
+          # downloads and builds the binary assets.
           git fetch origin main
           git rebase origin/main
           git push origin HEAD:main
