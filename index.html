@@ -136,7 +136,7 @@
 'use strict';
 const START_FEN='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const glyph={K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙',k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
-let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=null, engineReady=false, engineBusy=false, lastBest=null, lastPv='', pvLines={}, pendingSearch=null, engineBlobUrl=null;
+let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=null, engineReady=false, engineBusy=false, lastBest=null, lastPv='', pvLines={}, pendingSearch=null;
 let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated=false;
 let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow=null;
 let chessVisionPromise=null, chessVision=null, lastRecognition=null;
