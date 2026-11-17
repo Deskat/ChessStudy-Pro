@@ -388,7 +388,7 @@ function ensureEngine(){
  const variant=$('engineVariant').value;
  const engineLabel=variant==='lite'?'Stockfish 19 Lite':'Stockfish 19 Full';
  const engineFile=variant==='lite'?'stockfish-19-lite-single.js':'stockfish-19-single.js';
- const engineBase='https://cdn.jsdelivr.net/npm/stockfish@19.0.1/bin/';
+ const engineBase='https://unpkg.com/stockfish@19.0.1/bin/';
  setStatus('Загружаю '+engineLabel+' для iPhone. '+(variant==='lite'?'Загрузка около 1,7 МБ.':'Загрузка около 94 МБ; на медленном интернете это может занять время.'),'loading');
  $('engineVariant').disabled=true;
  return new Promise(async (resolve,reject)=>{
@@ -408,7 +408,7 @@ function ensureEngine(){
     const workerSource=await response.text();
     if(workerSource.length<10000)throw new Error('Получен неполный файл движка. Проверь подключение к интернету.');
     // Embed the worker script in a same-origin Blob worker. Module.locateFile
-    // points the matching WASM binary to jsDelivr; single-thread builds do
+    // points the matching WASM binary to UNPKG; single-thread builds do
     // not need SharedArrayBuffer or COOP/COEP response headers.
     const bootstrap='var Module = { locateFile: function(path) { return new URL(path, '+JSON.stringify(engineBase)+').href; } };\n';
     const blob=new Blob([bootstrap,workerSource],{type:'text/javascript'});
