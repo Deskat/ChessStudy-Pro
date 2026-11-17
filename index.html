@@ -92,8 +92,8 @@
         <div style="margin-bottom:11px">
           <label class="label" for="engineVariant">Движок для iPhone</label>
           <select class="select" id="engineVariant" style="width:100%">
-            <option value="full" selected>Stockfish 19 Full — около 94 МБ, сильнее</option>
-            <option value="lite">Stockfish 19 Lite — около 1,7 МБ, быстрее</option>
+            <option value="full">Stockfish 19 Full — около 94 МБ, сильнее</option>
+            <option value="lite" selected>Stockfish 19 Lite — около 1,7 МБ, быстрее</option>
           </select>
           <div class="hint" id="engineVariantHint">Full использует полную нейросеть, но работает в 1 поток. Lite загружается быстрее, но слабее. Выбери до первого анализа.</div>
         </div>
@@ -388,7 +388,7 @@ function ensureEngine(){
  const variant=$('engineVariant').value;
  const engineLabel=variant==='lite'?'Stockfish 19 Lite':'Stockfish 19 Full';
  const engineFile=variant==='lite'?'stockfish-19-lite-single.js':'stockfish-19-single.js';
- const engineBase='https://unpkg.com/stockfish@19.0.1/bin/';
+ const engineBase='new URL('./engine/', location.href).href;';
  setStatus('Загружаю '+engineLabel+' для iPhone. '+(variant==='lite'?'Загрузка около 1,7 МБ.':'Загрузка около 94 МБ; на медленном интернете это может занять время.'),'loading');
  $('engineVariant').disabled=true;
  return new Promise(async (resolve,reject)=>{
@@ -408,7 +408,7 @@ function ensureEngine(){
     const workerSource=await response.text();
     if(workerSource.length<10000)throw new Error('Получен неполный файл движка. Проверь подключение к интернету.');
     // Embed the worker script in a same-origin Blob worker. Module.locateFile
-    // points the matching WASM binary to UNPKG; single-thread builds do
+    // points the matching WASM binary to this site's same-origin engine folder; single-thread builds do
     // not need SharedArrayBuffer or COOP/COEP response headers.
     const bootstrap='var Module = { locateFile: function(path) { return new URL(path, '+JSON.stringify(engineBase)+').href; } };\n';
     const blob=new Blob([bootstrap,workerSource],{type:'text/javascript'});
