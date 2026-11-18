@@ -14,9 +14,9 @@ These artwork files retain their original license. This notice does not change t
 
 ## Alternative Cburnett V2 artwork
 
-The optional `pieces/cburnett-v2/CBurnettV2_100.png` sprite sheet contains the improved Cburnett set by JohnPablok, published as "Chess Pieces and Board squares" on OpenGameArt.org.
+The 12 SVG files in `pieces/cburnett-v2/` are the aligned individual-piece version of JohnPablok's improved Cburnett set, published as "Chess Pieces and Board squares" on OpenGameArt.org. The SVGs use a common square viewBox so all twelve icons share a consistent placement and scale.
 
 - Source: https://opengameart.org/content/chess-pieces-and-board-squares
 - Author: JohnPablok
 - License: Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0)
-- The sprite sheet is included as a separate optional set and is not an official Lichess set.
+- The set is included as a separate optional theme and is not an official Lichess set.
