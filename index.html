@@ -207,7 +207,6 @@ html[data-theme="dark"] .files-coords{color:#d5b58c}
 /* One centered size for all pieces and both piece sets. */
 .piece{width:84%;height:84%;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;line-height:1;font-size:0;text-shadow:none}
 .piece-image,.piece-sprite{width:100%;height:100%;object-fit:contain}
-.piece-sprite{background-size:1200% 100%;background-repeat:no-repeat;background-position:var(--piece-position,0%) center}
 /* End-of-game labels inspired by the supplied checkmate reference. */
 .game-end-overlay{position:absolute;inset:0;z-index:8;pointer-events:none}
 .game-end-overlay[hidden]{display:none}
@@ -374,10 +373,7 @@ function pieceImageMarkup(ch){
  const kind=ch.toUpperCase();
  const name={K:'король',Q:'ферзь',R:'ладья',B:'слон',N:'конь',P:'пешка'}[kind];
  if(selectedPieceSet==='cburnett-v2'){
-  const pieceOrder={P:0,N:1,B:2,R:3,Q:4,K:5};
-  const spriteIndex=pieceOrder[kind]+(white?0:6);
-  const position=(spriteIndex*100/11).toFixed(4)+'%';
-  return '<span class="piece-sprite piece-sprite-v2" style="--piece-position:'+position+'" role="img" aria-label="'+(white?'Белый':'Чёрный')+' '+name+'"></span>';
+  return '<img class="piece-image piece-image-v2" src="./pieces/cburnett-v2/'+color+kind+'.svg" alt="'+(white?'Белый':'Чёрный')+' '+name+'" draggable="false">';
  }
  return '<img class="piece-image" src="./pieces/cburnett/'+color+kind+'.svg" alt="'+(white?'Белый':'Чёрный')+' '+name+'" draggable="false">';
 }
