@@ -503,7 +503,7 @@ function validateMoveGeometry(from,to,piece,target){
  if(!clearPath(fr,fc,tr,tc))throw Error('Путь фигуры закрыт другой фигурой.');
 }
 function applyBoardMove(from,to,promo=''){
- if(gameEnded)throw Error('Партия завершена матом. Установи новую позицию, чтобы продолжить.');
+ if(gameEnded)throw Error('Партия завершена. Установи новую позицию, чтобы продолжить.');
  const b=boardState.board, piece=b[from], target=b[to], fenBefore=toFEN(boardState);if(!piece)throw Error('В исходной клетке нет фигуры.');
  if(from===to)throw Error('Выбери другую клетку назначения.');
  if((boardState.turn==='w')!==(piece===piece.toUpperCase()))throw Error('Эта фигура не соответствует стороне, чей сейчас ход.');
