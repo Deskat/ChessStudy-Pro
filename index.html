@@ -863,6 +863,7 @@ function enableEditor(on){
  $('editState').textContent=on?'Редактор включён':'Выключен';
  $('editBtn').textContent=on?'Закрыть редактор':'Открыть редактор';
  updateEditorUndoButton();clearArrow();
+ if(!on&&boardState)updateGameEndState();
 }
 function moveToFen(sq){const from=sq.slice(0,2);return from;}
 function ensureEngine(){
