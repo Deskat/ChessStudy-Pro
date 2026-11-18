@@ -179,6 +179,26 @@ html[data-theme="dark"] .palette-group.black-group .piece-choice.active{backgrou
 .move-history-actions .btn{min-width:130px;flex:0 1 auto}
 html[data-theme="dark"] .piece-image{filter:none}
 @media(max-width:420px){.move-history-actions .btn{flex:1;min-width:0}}
+.head-controls{display:flex;align-items:center;gap:9px;min-width:0}
+.piece-set-control{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 11px;border:1px solid #e2e7df;border-radius:999px;background:#eef1eb;min-width:0}
+.piece-set-label{font-size:12px;font-weight:650;color:#647064;white-space:nowrap}
+.piece-set-select{max-width:130px;min-width:110px;border:0;border-radius:999px;background:#fffefa;color:#3f5844;padding:8px 10px;font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;outline:none}
+.piece-sprite{display:block;width:100%;height:100%;background-repeat:no-repeat;background-size:1216% 100%;background-position:var(--piece-position,0%) center;pointer-events:none;user-select:none}
+.piece-sprite-v2{background-image:url("./pieces/cburnett-v2/CBurnettV2_100.png")}
+html[data-theme="dark"] .piece-set-control{background:#252d24;border-color:#3a4538}
+html[data-theme="dark"] .piece-set-label{color:#c2cdbd}
+html[data-theme="dark"] .piece-set-select{background:#3a4838;color:#f2f6ed}
+@media(max-width:850px){
+ .head{align-items:center;flex-wrap:wrap}
+ .head-controls{width:100%;justify-content:space-between;gap:7px}
+ .piece-set-control{flex:1;justify-content:space-between}
+ .piece-set-select{max-width:150px;min-width:0}
+}
+@media(max-width:390px){
+ .piece-set-label{font-size:11px}
+ .piece-set-select{max-width:120px;padding:7px 8px;font-size:11px}
+ .head-controls{gap:6px}
+}
 </style>
 </head>
 <body>
@@ -188,16 +208,25 @@ html[data-theme="dark"] .piece-image{filter:none}
   </div>
   <header class="head">
     <div class="brand"><div class="logo" aria-hidden="true">♞</div><div><h1>Chess Study</h1></div></div>
-    <div class="theme-switch" role="group" aria-label="Тема оформления">
-      <button type="button" class="theme-btn" id="themeLightBtn" aria-pressed="true">☀ Светлая</button>
-      <button type="button" class="theme-btn" id="themeDarkBtn" aria-pressed="false">☾ Тёмная</button>
+    <div class="head-controls">
+      <label class="piece-set-control" for="pieceSetSelect">
+        <span class="piece-set-label">Фигуры</span>
+        <select class="piece-set-select" id="pieceSetSelect" aria-label="Набор шахматных фигур">
+          <option value="cburnett">Cburnett</option>
+          <option value="cburnett-v2">Cburnett V2</option>
+        </select>
+      </label>
+      <div class="theme-switch" role="group" aria-label="Тема оформления">
+        <button type="button" class="theme-btn" id="themeLightBtn" aria-pressed="true">☀ Светлая</button>
+        <button type="button" class="theme-btn" id="themeDarkBtn" aria-pressed="false">☾ Тёмная</button>
+      </div>
     </div>
   </header>
   <main class="layout">
     <section class="panel boardpanel">
       <div class="board-top"><div><div class="turn" id="turnLabel">Ход белых</div><div class="muted small" id="fenShort">Начальная позиция</div></div><div class="board-tools"><button type="button" class="btn subtle" id="startBtn">Начальная позиция</button><button type="button" class="btn subtle" id="flipBtn">↻ Перевернуть</button></div></div>
       <div class="board-wrap" id="boardWrap"><div class="board" id="board" aria-label="Шахматная доска"><div class="sq light" data-r="0" data-c="0" data-square="a8" aria-label="a8"><span class="piece black">♜</span><span class="coord">8</span></div><div class="sq dark" data-r="0" data-c="1" data-square="b8" aria-label="b8"><span class="piece black">♞</span></div><div class="sq light" data-r="0" data-c="2" data-square="c8" aria-label="c8"><span class="piece black">♝</span></div><div class="sq dark" data-r="0" data-c="3" data-square="d8" aria-label="d8"><span class="piece black">♛</span></div><div class="sq light" data-r="0" data-c="4" data-square="e8" aria-label="e8"><span class="piece black">♚</span></div><div class="sq dark" data-r="0" data-c="5" data-square="f8" aria-label="f8"><span class="piece black">♝</span></div><div class="sq light" data-r="0" data-c="6" data-square="g8" aria-label="g8"><span class="piece black">♞</span></div><div class="sq dark" data-r="0" data-c="7" data-square="h8" aria-label="h8"><span class="piece black">♜</span></div><div class="sq dark" data-r="1" data-c="0" data-square="a7" aria-label="a7"><span class="piece black">♟</span><span class="coord">7</span></div><div class="sq light" data-r="1" data-c="1" data-square="b7" aria-label="b7"><span class="piece black">♟</span></div><div class="sq dark" data-r="1" data-c="2" data-square="c7" aria-label="c7"><span class="piece black">♟</span></div><div class="sq light" data-r="1" data-c="3" data-square="d7" aria-label="d7"><span class="piece black">♟</span></div><div class="sq dark" data-r="1" data-c="4" data-square="e7" aria-label="e7"><span class="piece black">♟</span></div><div class="sq light" data-r="1" data-c="5" data-square="f7" aria-label="f7"><span class="piece black">♟</span></div><div class="sq dark" data-r="1" data-c="6" data-square="g7" aria-label="g7"><span class="piece black">♟</span></div><div class="sq light" data-r="1" data-c="7" data-square="h7" aria-label="h7"><span class="piece black">♟</span></div><div class="sq light" data-r="2" data-c="0" data-square="a6" aria-label="a6"><span class="coord">6</span></div><div class="sq dark" data-r="2" data-c="1" data-square="b6" aria-label="b6"></div><div class="sq light" data-r="2" data-c="2" data-square="c6" aria-label="c6"></div><div class="sq dark" data-r="2" data-c="3" data-square="d6" aria-label="d6"></div><div class="sq light" data-r="2" data-c="4" data-square="e6" aria-label="e6"></div><div class="sq dark" data-r="2" data-c="5" data-square="f6" aria-label="f6"></div><div class="sq light" data-r="2" data-c="6" data-square="g6" aria-label="g6"></div><div class="sq dark" data-r="2" data-c="7" data-square="h6" aria-label="h6"></div><div class="sq dark" data-r="3" data-c="0" data-square="a5" aria-label="a5"><span class="coord">5</span></div><div class="sq light" data-r="3" data-c="1" data-square="b5" aria-label="b5"></div><div class="sq dark" data-r="3" data-c="2" data-square="c5" aria-label="c5"></div><div class="sq light" data-r="3" data-c="3" data-square="d5" aria-label="d5"></div><div class="sq dark" data-r="3" data-c="4" data-square="e5" aria-label="e5"></div><div class="sq light" data-r="3" data-c="5" data-square="f5" aria-label="f5"></div><div class="sq dark" data-r="3" data-c="6" data-square="g5" aria-label="g5"></div><div class="sq light" data-r="3" data-c="7" data-square="h5" aria-label="h5"></div><div class="sq light" data-r="4" data-c="0" data-square="a4" aria-label="a4"><span class="coord">4</span></div><div class="sq dark" data-r="4" data-c="1" data-square="b4" aria-label="b4"></div><div class="sq light" data-r="4" data-c="2" data-square="c4" aria-label="c4"></div><div class="sq dark" data-r="4" data-c="3" data-square="d4" aria-label="d4"></div><div class="sq light" data-r="4" data-c="4" data-square="e4" aria-label="e4"></div><div class="sq dark" data-r="4" data-c="5" data-square="f4" aria-label="f4"></div><div class="sq light" data-r="4" data-c="6" data-square="g4" aria-label="g4"></div><div class="sq dark" data-r="4" data-c="7" data-square="h4" aria-label="h4"></div><div class="sq dark" data-r="5" data-c="0" data-square="a3" aria-label="a3"><span class="coord">3</span></div><div class="sq light" data-r="5" data-c="1" data-square="b3" aria-label="b3"></div><div class="sq dark" data-r="5" data-c="2" data-square="c3" aria-label="c3"></div><div class="sq light" data-r="5" data-c="3" data-square="d3" aria-label="d3"></div><div class="sq dark" data-r="5" data-c="4" data-square="e3" aria-label="e3"></div><div class="sq light" data-r="5" data-c="5" data-square="f3" aria-label="f3"></div><div class="sq dark" data-r="5" data-c="6" data-square="g3" aria-label="g3"></div><div class="sq light" data-r="5" data-c="7" data-square="h3" aria-label="h3"></div><div class="sq light" data-r="6" data-c="0" data-square="a2" aria-label="a2"><span class="piece white">♙</span><span class="coord">2</span></div><div class="sq dark" data-r="6" data-c="1" data-square="b2" aria-label="b2"><span class="piece white">♙</span></div><div class="sq light" data-r="6" data-c="2" data-square="c2" aria-label="c2"><span class="piece white">♙</span></div><div class="sq dark" data-r="6" data-c="3" data-square="d2" aria-label="d2"><span class="piece white">♙</span></div><div class="sq light" data-r="6" data-c="4" data-square="e2" aria-label="e2"><span class="piece white">♙</span></div><div class="sq dark" data-r="6" data-c="5" data-square="f2" aria-label="f2"><span class="piece white">♙</span></div><div class="sq light" data-r="6" data-c="6" data-square="g2" aria-label="g2"><span class="piece white">♙</span></div><div class="sq dark" data-r="6" data-c="7" data-square="h2" aria-label="h2"><span class="piece white">♙</span></div><div class="sq dark" data-r="7" data-c="0" data-square="a1" aria-label="a1"><span class="piece white">♖</span><span class="coord">1</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">a</span></div><div class="sq light" data-r="7" data-c="1" data-square="b1" aria-label="b1"><span class="piece white">♘</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">b</span></div><div class="sq dark" data-r="7" data-c="2" data-square="c1" aria-label="c1"><span class="piece white">♗</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">c</span></div><div class="sq light" data-r="7" data-c="3" data-square="d1" aria-label="d1"><span class="piece white">♕</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">d</span></div><div class="sq dark" data-r="7" data-c="4" data-square="e1" aria-label="e1"><span class="piece white">♔</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">e</span></div><div class="sq light" data-r="7" data-c="5" data-square="f1" aria-label="f1"><span class="piece white">♗</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">f</span></div><div class="sq dark" data-r="7" data-c="6" data-square="g1" aria-label="g1"><span class="piece white">♘</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">g</span></div><div class="sq light" data-r="7" data-c="7" data-square="h1" aria-label="h1"><span class="piece white">♖</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">h</span></div></div>
-      <noscript><div class="status error" style="margin-top:10px">Показана только начальная расстановка. Для ходов и анализа открой эту страницу в Safari по HTTPS: предпросмотр файлов не запускает JavaScript.</div></noscript><svg class="arrows" id="arrows" viewBox="0 0 800 800" preserveAspectRatio="none"><defs><marker id="arrowHead" markerWidth="7" markerHeight="7" refX="5.4" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3.5 L0,7 Z" fill="#f3c94f"/></marker></defs><line id="bestArrow" x1="0" y1="0" x2="0" y2="0" stroke="#f3c94f" stroke-width="15" stroke-linecap="round" marker-end="url(#arrowHead)" opacity="0"/></svg></div>
+      <noscript><div class="status error" style="margin-top:10px">Показана только начальная расстановка. Для ходов и анализа открой эту страницу в Safari по HTTPS: предпросмотр файлов не запускает JavaScript.</div></noscript><svg class="arrows" id="arrows" viewBox="0 0 800 800" preserveAspectRatio="none"><defs><marker id="arrowHead" markerWidth="4" markerHeight="4" refX="3.2" refY="2" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L4,2 L0,4 Z" fill="#f3c94f"/></marker></defs><line id="bestArrow" x1="0" y1="0" x2="0" y2="0" stroke="#f3c94f" stroke-width="7" stroke-linecap="round" marker-end="url(#arrowHead)" opacity="0"/></svg></div>
       <div class="board-caption"><span id="engineDepth">Не запущен</span></div>
       <div class="row" style="margin-top:12px;justify-content:space-between">
         <button type="button" class="btn" id="moveModeBtn">Ходы на доске</button>
@@ -290,12 +319,27 @@ html[data-theme="dark"] .piece-image{filter:none}
 <script>
 'use strict';
 const START_FEN='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+let selectedPieceSet='cburnett';
 function pieceImageMarkup(ch){
  const white=ch===ch.toUpperCase();
  const color=white?'w':'b';
  const kind=ch.toUpperCase();
  const name={K:'король',Q:'ферзь',R:'ладья',B:'слон',N:'конь',P:'пешка'}[kind];
+ if(selectedPieceSet==='cburnett-v2'){
+  const pieceOrder={P:0,N:1,B:2,R:3,Q:4,K:5};
+  const spriteIndex=pieceOrder[kind]+(white?0:6);
+  const position=(spriteIndex*100/11.16).toFixed(4)+'%';
+  return '<span class="piece-sprite piece-sprite-v2" style="--piece-position:'+position+'" role="img" aria-label="'+(white?'Белый':'Чёрный')+' '+name+'"></span>';
+ }
  return '<img class="piece-image" src="./pieces/cburnett/'+color+kind+'.svg" alt="'+(white?'Белый':'Чёрный')+' '+name+'" draggable="false">';
+}
+function setPieceSet(value){
+ selectedPieceSet=value==='cburnett-v2'?'cburnett-v2':'cburnett';
+ try{localStorage.setItem('chess-study-piece-set',selectedPieceSet);}catch(_){}
+ const select=$('pieceSetSelect');
+ if(select)select.value=selectedPieceSet;
+ if(boardState)drawBoard();
+ if($('palette'))initPalette();
 }
 
 let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=null, engineReady=false, engineBusy=false, lastBest=null, lastPv='', pvLines={}, pendingSearch=null;
@@ -450,7 +494,7 @@ function drawArrow(from,to){
  const a=$('bestArrow');let idx=s=>({r:8-Number(s[1]),c:s.charCodeAt(0)-97});let f=idx(from),t=idx(to);let fv=flipped?{r:7-f.r,c:7-f.c}:f,tv=flipped?{r:7-t.r,c:7-t.c}:t;
  const cell=100;let x1=(fv.c+.5)*cell,y1=(fv.r+.5)*cell,x2=(tv.c+.5)*cell,y2=(tv.r+.5)*cell;
  // Shorten the arrow so its tip sits just before the destination square centre.
- const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy)||1; x2-=dx/len*15;y2-=dy/len*15;
+ const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy)||1; x2-=dx/len*8;y2-=dy/len*8;
  a.setAttribute('x1',x1);a.setAttribute('y1',y1);a.setAttribute('x2',x2);a.setAttribute('y2',y2);a.setAttribute('opacity','0.9');lastBest={from,to};plannerArrow={from,to};drawPlannerCanvas();
 }
 function plannerPoint(u,v){
@@ -765,6 +809,7 @@ $('flipBtn').onclick=()=>{const previous=lastBest;flipped=!flipped;drawBoard();i
 $('editBtn').onclick=()=>enableEditor(!editing);
 $('themeLightBtn').onclick=()=>setTheme('light');
 $('themeDarkBtn').onclick=()=>setTheme('dark');
+$('pieceSetSelect').addEventListener('change',()=>setPieceSet($('pieceSetSelect').value));
 $('clearBoardBtn').onclick=()=>{
  if(boardState.board.some(Boolean)){pushEditorSnapshot();boardState.board=Array(64).fill(null);boardState.ep='-';boardState.half='0';moveHistory=[];redoHistory=[];updateMoveHistory();drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();}
 };
@@ -777,7 +822,14 @@ $('playBestBtn').onclick=()=>{try{const uci=$('playBestBtn').dataset.uci||'';if(
 $('undoMoveBtn').onclick=undoLastMove;
 $('redoMoveBtn').onclick=redoLastMove;
 $('copyImageFenBtn').onclick=recognizePlannerPosition;
-initPalette();boardState=parseFEN(START_FEN);drawBoard();updateEditorUndoButton();let savedTheme='light';try{savedTheme=localStorage.getItem('chess-study-theme')||'light';}catch(_){}setTheme(savedTheme);updateModeHint();
+let savedTheme='light',savedPieceSet='cburnett';
+try{savedTheme=localStorage.getItem('chess-study-theme')||'light';savedPieceSet=localStorage.getItem('chess-study-piece-set')||'cburnett';}catch(_){}
+selectedPieceSet=savedPieceSet==='cburnett-v2'?'cburnett-v2':'cburnett';
+$('pieceSetSelect').value=selectedPieceSet;
+moveMode=false;pendingFrom=null;
+$('moveModeBtn').textContent='Включить ходы';
+$('moveModeState').textContent='Выключен';
+initPalette();boardState=parseFEN(START_FEN);drawBoard();updateEditorUndoButton();setTheme(savedTheme);updateModeHint();
 window.addEventListener('resize',()=>{if(lastBest)drawArrow(lastBest.from,lastBest.to);});
 // Installable Safari/PWA shell. The app requires HTTPS for service workers.
 if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
