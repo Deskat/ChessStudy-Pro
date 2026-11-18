@@ -253,6 +253,38 @@ html[data-theme="dark"] .game-result-banner{background:#f7f6ef}
 .board-wrap{isolation:isolate}
 .game-end-overlay{z-index:12}
 .game-end-pill{z-index:13}
+/* App identity uses a proper SVG knight from the active chess set. */
+.logo{width:48px;height:48px;min-width:48px;border-radius:15px;background:#e4ebe1;box-shadow:0 3px 10px rgba(39,55,40,.1);overflow:hidden;padding:3px}
+.logo img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+html[data-theme="dark"] .logo{background:#e4ebe1}
+/* Chess.com/Lichess-style legal move indicators. */
+.sq.selected{box-shadow:inset 0 0 0 999px rgba(246,219,105,.46),inset 0 0 0 3px rgba(202,153,65,.72)}
+.sq.legal-target::after{content:"";position:absolute;left:50%;top:50%;width:17%;height:17%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(71,118,62,.88);box-shadow:0 0 0 1px rgba(255,255,255,.25);z-index:3;pointer-events:none}
+.sq.legal-capture::after{content:"";position:absolute;left:50%;top:50%;width:80%;height:80%;transform:translate(-50%,-50%);border-radius:50%;border:4px solid rgba(71,118,62,.88);box-sizing:border-box;background:transparent;z-index:3;pointer-events:none}
+html[data-theme="dark"] .sq.selected{box-shadow:inset 0 0 0 999px rgba(246,219,105,.42),inset 0 0 0 3px rgba(215,175,94,.9)}
+html[data-theme="dark"] .sq.legal-target::after{background:rgba(206,231,188,.92);box-shadow:0 0 0 1px rgba(20,35,20,.18)}
+html[data-theme="dark"] .sq.legal-capture::after{border-color:rgba(206,231,188,.92)}
+/* Result markers sit on the top-right corner of each king's square. */
+.game-end-overlay{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:hidden}
+.king-result-tag{position:absolute;transform:translate(-100%,-10%);display:flex;align-items:center;gap:5px;min-height:27px;padding:4px 8px;border-radius:9px;background:rgba(255,254,250,.97);box-shadow:0 2px 9px rgba(0,0,0,.22);font:800 11px/1.1 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;white-space:nowrap;animation:king-result-pop .28s cubic-bezier(.2,.8,.2,1) both}
+.king-result-tag.loss{color:#d84d45;border:1px solid rgba(216,77,69,.32)}
+.king-result-tag.win{color:#719e51;border:1px solid rgba(113,158,81,.32)}
+.king-result-tag.draw{color:#647b91;border:1px solid rgba(100,123,145,.32)}
+.king-result-icon{display:flex;align-items:center;justify-content:center;width:18px;height:17px;flex:none}
+.king-crown{width:18px;height:15px;display:block}
+.king-cross,.king-draw-icon{width:15px;height:15px;display:block}
+.king-result-text{display:block}
+@keyframes king-result-pop{from{opacity:0;scale:.72}to{opacity:1;scale:1}}
+.result-confetti{position:absolute;top:-6%;z-index:1;width:6px;height:10px;border-radius:2px;background:#8bad6e;opacity:0;animation:result-confetti-fall var(--confetti-duration,1.8s) ease-in var(--confetti-delay,0s) forwards;transform:rotate(var(--confetti-rotate,0deg))}
+.result-confetti:nth-child(3n){background:#e4bd6b;width:5px;height:8px}
+.result-confetti:nth-child(3n + 1){background:#8eafbd}
+.result-confetti:nth-child(4n){border-radius:50%;width:5px;height:5px}
+@keyframes result-confetti-fall{0%{transform:translateY(0) rotate(var(--confetti-rotate,0deg));opacity:0}12%{opacity:.9}100%{transform:translateY(115vh) rotate(calc(var(--confetti-rotate,0deg) + 420deg));opacity:0}}
+.game-result-banner{width:100%;max-width:620px;margin:12px auto 0;min-height:44px}
+.result-separator{color:#9aa195}
+.game-result-banner .result-victory{color:#719e51}
+@media(prefers-reduced-motion:reduce){.king-result-tag,.result-confetti{animation:none;opacity:1}}
+
 </style>
 </head>
 <body>
@@ -261,7 +293,7 @@ html[data-theme="dark"] .game-result-banner{background:#f7f6ef}
     <strong>Открыт предварительный просмотр.</strong> Здесь шахматная доска показывается как статичная страница, но кнопки и ходы не выполняются. Для работы открой опубликованный HTTPS-адрес ChessStudy Pro именно в Safari. Не открывай этот HTML внутри «Файлов» или окна предпросмотра ZIP.
   </div>
   <header class="head">
-    <div class="brand"><div class="logo" aria-hidden="true">♞</div><div><h1>Chess Study</h1></div></div>
+    <div class="brand"><div class="logo" aria-hidden="true"><img id="brandPieceIcon" src="./pieces/cburnett/wN.svg" alt=""></div><div><h1>Chess Study</h1></div></div>
     <div class="head-controls">
       <label class="piece-set-control" for="pieceSetSelect">
         <span class="piece-set-label">Фигуры</span>
@@ -393,6 +425,8 @@ function setPieceSet(value){
  if($('moveGuideGrid'))initMoveGuide();
  const select=$('pieceSetSelect');
  if(select)select.value=selectedPieceSet;
+ const brandIcon=$('brandPieceIcon');
+ if(brandIcon)brandIcon.src='./pieces/'+selectedPieceSet+'/wN.svg';
  if(boardState)drawBoard();
  if($('palette'))initPalette();
 }
@@ -645,26 +679,49 @@ function sideHasLegalMove(side){
  }
  return false;
 }
+function kingSquarePosition(piece){
+ const index=boardState.board.indexOf(piece);
+ if(index<0)return null;
+ const row=Math.floor(index/8),col=index%8;
+ const visualRow=flipped?7-row:row,visualCol=flipped?7-col:col;
+ return {left:(visualCol+1)*12.5-2.2,top:visualRow*12.5+2.2};
+}
+function resultKingTag(piece,label,kind,icon){
+ const pos=kingSquarePosition(piece);if(!pos)return '';
+ const left=Math.max(3,Math.min(97,pos.left));
+ const top=Math.max(3,Math.min(97,pos.top));
+ return '<div class="king-result-tag '+kind+'" style="left:'+left+'%;top:'+top+'%" role="img" aria-label="'+label+'"><span class="king-result-icon">'+icon+'</span><span class="king-result-text">'+label+'</span></div>';
+}
+function buildResultConfetti(){
+ let html='';
+ for(let i=0;i<18;i++){
+  const left=(4+(i*37)%92),delay=((i%6)*0.09).toFixed(2),duration=(1.6+(i%4)*0.18).toFixed(2),rotate=(i*53)%180;
+  html+='<i class="result-confetti" style="left:'+left+'%;--confetti-delay:'+delay+'s;--confetti-duration:'+duration+'s;--confetti-rotate:'+rotate+'deg"></i>';
+ }
+ return html;
+}
 function updateGameEndState(){
- const overlay=$('gameEndOverlay'),banner=$('gameResultBanner');if(!boardState)return;
+ const overlay=$('gameEndOverlay'),banner=$('gameResultBanner');
+ if(!boardState)return;
  const side=boardState.turn;
  const checked=kingIsInCheck(boardState.board,side);
  const canMove=sideHasLegalMove(side);
  gameEnded=!canMove;
  if(!canMove){
-  const crown='<svg class="game-end-crown" viewBox="0 0 40 30" aria-hidden="true"><path fill="currentColor" d="M3 8 11 14 17 4 22 14 30 5 37 8 33 22 7 22Z"/><path fill="currentColor" d="M8 25h25v3H8z"/></svg>';
+  const crown='<svg class="king-crown" viewBox="0 0 40 30" aria-hidden="true"><path fill="currentColor" d="M3 8 11 14 17 4 22 14 30 5 37 8 33 22 7 22Z"/><path fill="currentColor" d="M8 25h25v3H8z"/></svg>';
+  const cross='<svg class="king-cross" viewBox="0 0 30 30" aria-hidden="true"><path d="M8 8 22 22M22 8 8 22" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>';
   if(checked){
-   overlay.innerHTML='<div class="game-end-pill mate">Мат</div><div class="game-end-pill victory">'+crown+'<span>Победа</span></div>';
+   const loser=side==='w'?'K':'k',winner=side==='w'?'k':'K';
+   if(overlay)overlay.innerHTML=resultKingTag(loser,'Мат','loss',cross)+resultKingTag(winner,'Победа','win',crown)+buildResultConfetti();
+   if(banner){banner.innerHTML='<strong>Мат</strong><span class="result-separator">·</span><span class="result-victory">Победа '+(side==='w'?'чёрных':'белых')+'</span>';banner.hidden=false;}
    setStatus('Мат. Победа '+(side==='w'?'чёрных':'белых')+'.','ok');
   }else{
-   overlay.innerHTML='<div class="game-end-pill mate">Пат</div><div class="game-end-pill victory">'+crown+'<span>Ничья</span></div>';
+   const drawMark='<svg class="king-draw-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M5 14h18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>';
+   if(overlay)overlay.innerHTML=resultKingTag('K','Пат','draw',drawMark)+resultKingTag('k','Пат','draw',drawMark);
+   if(banner){banner.innerHTML='<strong>Пат</strong><span class="result-separator">·</span><span class="result-victory">Ничья</span>';banner.hidden=false;}
    setStatus('Пат. Ничья.','ok');
   }
   if(overlay)overlay.hidden=false;
-  if(banner){
-   banner.innerHTML=checked?'<strong>Мат</strong><span>·</span><span class="result-victory">Победа '+(side==='w'?'чёрных':'белых')+'</span>':'<strong>Пат</strong><span>·</span><span class="result-victory">Ничья</span>';
-   banner.hidden=false;
-  }
  }else{
   if(overlay){overlay.hidden=true;overlay.innerHTML='';}
   if(banner){banner.hidden=true;banner.innerHTML='';}
@@ -1052,6 +1109,7 @@ let savedTheme='light',savedPieceSet='cburnett';
 try{savedTheme=localStorage.getItem('chess-study-theme')||'light';savedPieceSet=localStorage.getItem('chess-study-piece-set')||'cburnett';}catch(_){}
 selectedPieceSet=savedPieceSet==='cburnett-v2'?'cburnett-v2':'cburnett';
 $('pieceSetSelect').value=selectedPieceSet;
+$('brandPieceIcon').src='./pieces/'+selectedPieceSet+'/wN.svg';
 pendingFrom=null;
 initPalette();boardState=parseFEN(START_FEN);drawBoard();initMoveGuide();updateEditorUndoButton();setTheme(savedTheme);updateModeHint();
 window.addEventListener('resize',()=>{if(lastBest)drawArrow(lastBest.from,lastBest.to);});
