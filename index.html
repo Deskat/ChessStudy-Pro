@@ -8,7 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Chess Study">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="./icons/favicon.svg">
+<link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
 <title>Chess Study</title>
 <style>
 :root{--bg:#0e141b;--panel:#17212c;--panel2:#1e2b38;--text:#edf3f8;--muted:#9aabba;--accent:#7bc4ff;--accent2:#a4e0bc;--light:#e6e2d5;--dark:#73918a;--line:#304151;--danger:#ff9b9b}
@@ -210,13 +212,13 @@ html[data-theme="dark"] .files-coords{color:#d5b58c}
 .game-end-overlay{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:hidden}
 .king-result-glyph{
  position:absolute;z-index:14;display:grid;place-items:center;
- width:clamp(20px,4.1%,28px);aspect-ratio:1;border-radius:50%;
- box-sizing:border-box;border:2px solid rgba(255,255,255,.96);
- box-shadow:0 1px 5px rgba(0,0,0,.4);
- transform:translate(-100%,0);
+ width:clamp(24px,4.6%,32px);aspect-ratio:1;border-radius:50%;
+ box-sizing:border-box;border:2px solid rgba(255,255,255,.98);
+ box-shadow:0 1px 5px rgba(0,0,0,.42);
+ transform:translate(-100%,0);overflow:visible;
  animation:result-glyph-appear .22s cubic-bezier(.18,.8,.25,1) both;
 }
-.king-result-glyph svg{display:block;width:66%;height:66%}
+.king-result-glyph svg{display:block;width:82%;height:82%;overflow:visible}
 .king-result-glyph.loss{background:#e34d49;color:#fff}
 .king-result-glyph.win{background:#7eae53;color:#fff}
 .king-result-glyph.draw{background:#73818a;color:#fff}
@@ -644,7 +646,7 @@ function updateGameEndState(){
  const canMove=sideHasLegalMove(side);
  gameEnded=!canMove;
  if(!canMove){
-  const crown='<svg viewBox="0 0 40 34" aria-hidden="true"><path fill="currentColor" d="M3 8 11 15 17 4 22 14 30 5 37 8 33 25 7 25Z"/><path fill="currentColor" d="M8 28h25v3H8z"/></svg>';
+  const crown='<svg viewBox="0 0 48 44" aria-hidden="true"><path fill="currentColor" d="M5 10 13 17 19 5 25 17 35 7 43 11 39 31 9 31Z"/><path fill="currentColor" d="M10 35H38V39H10Z"/></svg>';
   const check='<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M8 8 22 22M22 8 8 22" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/></svg>';
   const draw='<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M6 15h18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>';
   if(checked){
