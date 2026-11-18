@@ -58,7 +58,7 @@ jobs:
           node <<'NODE'
           const fs = require("node:fs");
           const html = fs.readFileSync("index.html", "utf8");
-          const script = html.match(/<script>\\s*([\\s\\S]*?)<\\/script>/);
+          const script = html.match(/<script>\s*([\s\S]*?)<\/script>/);
           if (!script) throw new Error("Main app script was not found.");
           fs.writeFileSync("/tmp/chess-study-app.js", script[1]);
 
