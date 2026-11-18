@@ -242,6 +242,17 @@ html[data-theme="dark"] .move-guide-copy p{color:#b6c0b2}
  .move-guide-card{grid-template-columns:88px minmax(0,1fr)}
 }
 
+.sq.legal-target::after{content:"";position:absolute;left:50%;top:50%;width:25%;height:25%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(47,75,54,.48);z-index:1;pointer-events:none}
+.sq.legal-capture::after{content:"";position:absolute;left:50%;top:50%;width:86%;height:86%;transform:translate(-50%,-50%);border-radius:50%;border:5px solid rgba(47,75,54,.48);box-sizing:border-box;background:transparent;z-index:1;pointer-events:none}
+html[data-theme="dark"] .sq.legal-target::after{background:rgba(205,225,196,.58)}
+html[data-theme="dark"] .sq.legal-capture::after{border-color:rgba(205,225,196,.58)}
+.game-result-banner{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px auto 0;padding:11px 14px;width:fit-content;max-width:100%;border-radius:999px;background:#fffefa;color:#df5146;font-size:16px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.game-result-banner[hidden]{display:none!important}
+.game-result-banner .result-victory{color:#7fa65d}
+html[data-theme="dark"] .game-result-banner{background:#f7f6ef}
+.board-wrap{isolation:isolate}
+.game-end-overlay{z-index:12}
+.game-end-pill{z-index:13}
 </style>
 </head>
 <body>
@@ -272,7 +283,8 @@ html[data-theme="dark"] .move-guide-copy p{color:#b6c0b2}
       <noscript><div class="status error" style="margin-top:10px">Показана только начальная расстановка. Для ходов и анализа открой эту страницу в Safari по HTTPS: предпросмотр файлов не запускает JavaScript.</div></noscript><svg class="arrows" id="arrows" viewBox="0 0 800 800" preserveAspectRatio="none"><defs><marker id="arrowHead" markerWidth="4" markerHeight="4" refX="3.2" refY="2" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L4,2 L0,4 Z" fill="#f3c94f"/></marker></defs><line id="bestArrow" x1="0" y1="0" x2="0" y2="0" stroke="#f3c94f" stroke-width="7" stroke-linecap="round" marker-end="url(#arrowHead)" opacity="0"/></svg><div class="game-end-overlay" id="gameEndOverlay" hidden aria-live="polite"></div></div>
       <div class="files-coords" id="filesCoords" aria-hidden="true"></div>
       <div class="board-caption"><span id="engineDepth">Не запущен</span></div>
-      <div class="hint move-entry-hint">Чтобы сделать ход, выбери свою фигуру, затем клетку назначения. Ввод ходов на доске всегда активен.</div>
+      <div class="game-result-banner" id="gameResultBanner" hidden role="status" aria-live="assertive"></div>
+      <div class="hint move-entry-hint">Нажми на фигуру — допустимые клетки её хода будут отмечены на доске.</div>
       <div class="row move-history-actions" style="margin-top:9px">
         <button type="button" class="btn subtle" id="undoMoveBtn" disabled>↶ Отменить ход</button>
         <button type="button" class="btn" id="redoMoveBtn" disabled>↷ Вернуть ход</button>
@@ -389,7 +401,7 @@ let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=nul
 let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated=false, editorUndoStack=[];
 let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow=null;
 let chessVisionPromise=null, chessVision=null, lastRecognition=null;
-let pendingFrom=null, moveHistory=[], redoHistory=[], gameEnded=false;
+let pendingFrom=null, pendingLegalMoves=[], moveHistory=[], redoHistory=[], gameEnded=false;
 const $=id=>document.getElementById(id);
 function initMoveGuide(){
  const root=$('moveGuideGrid');if(!root)return;
@@ -449,31 +461,47 @@ function toFEN(s){let rows=[];for(let r=0;r<8;r++){let row='',empty=0;for(let c=
 function squareName(r,c){return String.fromCharCode(97+c)+(8-r);}
 function drawBoard(){
  const el=$('board');el.innerHTML='';
- for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);let pc=boardState.board[r*8+c];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.innerHTML=pieceImageMarkup(pc);sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
+ for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let idx=r*8+c;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);if(idx===pendingFrom)sq.classList.add('selected');if(pendingLegalMoves.includes(idx))sq.classList.add(boardState.board[idx]?'legal-capture':'legal-target');let pc=boardState.board[idx];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.innerHTML=pieceImageMarkup(pc);sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
  const files=$('filesCoords');
  if(files){files.innerHTML='';for(let vc=0;vc<8;vc++){const c=flipped?7-vc:vc;const label=document.createElement('span');label.textContent=String.fromCharCode(97+c);files.appendChild(label);}}
  $('turnLabel').textContent=boardState.turn==='w'?'Ход белых':'Ход чёрных';$('fenShort').textContent=boardState.turn==='w'?'White to move':'Black to move';
  clearArrow();
 }
+function getLegalDestinations(from){
+ const piece=boardState.board[from];if(!piece)return [];
+ const side=piece===piece.toUpperCase()?'w':'b';
+ const out=[];
+ for(let to=0;to<64;to++){
+  if(to!==from&&legalMoveLeavesKingSafe(boardState.board,from,to,side,boardState.ep||'-',boardState.castle||'-'))out.push(to);
+ }
+ return out;
+}
 function boardClick(r,c){
  if(gameEnded)return;
+ const idx=r*8+c,piece=boardState.board[idx];
  if(editing){
-   pushEditorSnapshot();
-   boardState.board[r*8+c]=selectedPiece==='-'?null:selectedPiece;
-   boardState.ep='-';boardState.half='0';
-   moveHistory=[];redoHistory=[];updateMoveHistory();
-   drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();return;
-  }
- const idx=r*8+c, piece=boardState.board[idx];
- if(pendingFrom===null){
-  if(!piece){setStatus('Сначала выбери клетку со своей фигурой.','error');return;}
-  if((boardState.turn==='w')!==(piece===piece.toUpperCase())){setStatus('Сейчас ход '+(boardState.turn==='w'?'белых':'чёрных')+'. Выбери фигуру этого цвета.','error');return;}
-  pendingFrom=idx;highlightSelected();return;
+  pushEditorSnapshot();
+  boardState.board[idx]=selectedPiece==='-'?null:selectedPiece;
+  boardState.ep='-';boardState.half='0';
+  pendingFrom=null;pendingLegalMoves=[];
+  moveHistory=[];redoHistory=[];updateMoveHistory();
+  drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();return;
  }
- if(idx===pendingFrom){pendingFrom=null;drawBoard();return;}
- try{applyBoardMove(pendingFrom,idx,'');}catch(e){pendingFrom=null;drawBoard();setStatus(e.message,'error');}
-} 
-function highlightSelected(){document.querySelectorAll('.sq').forEach(x=>x.classList.toggle('selected',Number(x.dataset.r)*8+Number(x.dataset.c)===pendingFrom));}
+ if(pendingFrom===null){
+  if(!piece){setStatus('Выбери фигуру, чтобы увидеть её возможные ходы.','');return;}
+  if((boardState.turn==='w')!==(piece===piece.toUpperCase())){setStatus('Сейчас ход '+(boardState.turn==='w'?'белых':'чёрных')+'. Выбери фигуру этого цвета.','error');return;}
+  pendingFrom=idx;pendingLegalMoves=getLegalDestinations(idx);drawBoard();
+  if(!pendingLegalMoves.length)setStatus('У этой фигуры сейчас нет допустимых ходов.','');
+  return;
+ }
+ if(idx===pendingFrom){pendingFrom=null;pendingLegalMoves=[];drawBoard();return;}
+ if(piece&&(piece===piece.toUpperCase())===(boardState.turn==='w')){
+  pendingFrom=idx;pendingLegalMoves=getLegalDestinations(idx);drawBoard();return;
+ }
+ if(!pendingLegalMoves.includes(idx)){setStatus('Эта клетка не отмечена как допустимый ход. Выбери одну из подсвеченных клеток.','error');return;}
+ try{applyBoardMove(pendingFrom,idx,'');}
+ catch(e){pendingFrom=null;pendingLegalMoves=[];drawBoard();setStatus(e.message,'error');}
+}
 function removeCastleRight(ch){if(ch==='K')boardState.castle=boardState.castle.replace('K','');if(ch==='Q')boardState.castle=boardState.castle.replace('Q','');if(ch==='k')boardState.castle=boardState.castle.replace('k','');if(ch==='q')boardState.castle=boardState.castle.replace('q','');if(!boardState.castle)boardState.castle='-';}
 function clearPath(fr,fc,tr,tc){const dr=Math.sign(tr-fr),dc=Math.sign(tc-fc);let r=fr+dr,c=fc+dc;while(r!==tr||c!==tc){if(boardState.board[r*8+c])return false;r+=dr;c+=dc;}return true;}
 function validateMoveGeometry(from,to,piece,target){
@@ -499,6 +527,9 @@ function validateMoveGeometry(from,to,piece,target){
 function applyBoardMove(from,to,promo=''){
  if(gameEnded)throw Error('Партия завершена. Установи новую позицию, чтобы продолжить.');
  const b=boardState.board, piece=b[from], target=b[to], fenBefore=toFEN(boardState);if(!piece)throw Error('В исходной клетке нет фигуры.');
+ const side=piece===piece.toUpperCase()?'w':'b';
+ if(target&&target.toLowerCase()==='k')throw Error('Короля нельзя брать: партия завершается матом или патом.');
+ if(!legalMoveLeavesKingSafe(b,from,to,side,boardState.ep||'-',boardState.castle||'-'))throw Error('Этот ход недопустим: он оставляет твоего короля под шахом или нарушает правила.');
  if(from===to)throw Error('Выбери другую клетку назначения.');
  if((boardState.turn==='w')!==(piece===piece.toUpperCase()))throw Error('Эта фигура не соответствует стороне, чей сейчас ход.');
  if(target&&((target===target.toUpperCase())===(piece===piece.toUpperCase())))throw Error('Нельзя поставить свою фигуру на занятую своей фигурой клетку.');
@@ -519,7 +550,7 @@ function applyBoardMove(from,to,promo=''){
  if(color==='b')boardState.full=String(Number(boardState.full||1)+1);
  boardState.turn=color==='w'?'b':'w';
  const uci=fromSq+toSq+(pawn&&((color==='w'&&Math.floor(to/8)===0)||(color==='b'&&Math.floor(to/8)===7))?(promo||'q').toLowerCase():'');
- redoHistory=[];moveHistory.push({uci,fenBefore,fenAfter:toFEN(boardState)});$('fenInput').value=toFEN(boardState);lastBest=null;pendingFrom=null;clearArrow();drawBoard();updateMoveHistory();$('playBestBtn').disabled=true;setStatus('Ход '+uci+' записан. Теперь ход '+(boardState.turn==='w'?'белых':'чёрных')+'.','ok');updateGameEndState();
+ redoHistory=[];moveHistory.push({uci,fenBefore,fenAfter:toFEN(boardState)});$('fenInput').value=toFEN(boardState);lastBest=null;pendingFrom=null;pendingLegalMoves=[];clearArrow();drawBoard();updateMoveHistory();$('playBestBtn').disabled=true;setStatus('Ход '+uci+' записан. Теперь ход '+(boardState.turn==='w'?'белых':'чёрных')+'.','ok');updateGameEndState();
 }
 function clearRayOnBoard(board,from,to){
  const fr=Math.floor(from/8),fc=from%8,tr=Math.floor(to/8),tc=to%8;
@@ -556,7 +587,7 @@ function kingIsInCheck(board,side){
 }
 function legalMoveLeavesKingSafe(board,from,to,side,ep,castle){
  const piece=board[from];if(!piece||((piece===piece.toUpperCase())!==(side==='w')))return false;
- const target=board[to];if(target&&((target===target.toUpperCase())===(side==='w')))return false;
+ const target=board[to];if(target&&((target===target.toUpperCase())===(side==='w')))return false;if(target&&target.toLowerCase()==='k')return false;
  const fr=Math.floor(from/8),fc=from%8,tr=Math.floor(to/8),tc=to%8;
  const dr=tr-fr,dc=tc-fc,kind=piece.toLowerCase(),dir=side==='w'?-1:1;
  let enPassantCapture=false,castleSide='';
@@ -615,7 +646,7 @@ function sideHasLegalMove(side){
  return false;
 }
 function updateGameEndState(){
- const overlay=$('gameEndOverlay');if(!overlay||!boardState)return;
+ const overlay=$('gameEndOverlay'),banner=$('gameResultBanner');if(!boardState)return;
  const side=boardState.turn;
  const checked=kingIsInCheck(boardState.board,side);
  const canMove=sideHasLegalMove(side);
@@ -629,9 +660,14 @@ function updateGameEndState(){
    overlay.innerHTML='<div class="game-end-pill mate">Пат</div><div class="game-end-pill victory">'+crown+'<span>Ничья</span></div>';
    setStatus('Пат. Ничья.','ok');
   }
-  overlay.hidden=false;
+  if(overlay)overlay.hidden=false;
+  if(banner){
+   banner.innerHTML=checked?'<strong>Мат</strong><span>·</span><span class="result-victory">Победа '+(side==='w'?'чёрных':'белых')+'</span>':'<strong>Пат</strong><span>·</span><span class="result-victory">Ничья</span>';
+   banner.hidden=false;
+  }
  }else{
-  overlay.hidden=true;overlay.innerHTML='';
+  if(overlay){overlay.hidden=true;overlay.innerHTML='';}
+  if(banner){banner.hidden=true;banner.innerHTML='';}
   gameEnded=false;
  }
 }
@@ -648,7 +684,7 @@ function undoLastMove(){
   redoHistory.push(last);
   resetComebackState();
   boardState=parseFEN(last.fenBefore);
-  $('fenInput').value=toFEN(boardState);pendingFrom=null;lastBest=null;clearArrow();drawBoard();
+  $('fenInput').value=toFEN(boardState);pendingFrom=null;pendingLegalMoves=[];lastBest=null;clearArrow();drawBoard();
   updateMoveHistory();updateGameEndState();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
   setStatus('Ход отменён. Нажми «Вернуть ход», чтобы восстановить его.','ok');
  }catch(e){
@@ -663,7 +699,7 @@ function redoLastMove(){
   resetComebackState();
   boardState=parseFEN(next.fenAfter);
   moveHistory.push(next);
-  $('fenInput').value=toFEN(boardState);pendingFrom=null;lastBest=null;clearArrow();drawBoard();
+  $('fenInput').value=toFEN(boardState);pendingFrom=null;pendingLegalMoves=[];lastBest=null;clearArrow();drawBoard();
   updateMoveHistory();updateGameEndState();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
   setStatus('Отменённый ход восстановлен.','ok');
  }catch(e){
@@ -680,7 +716,7 @@ function updateModeHint(){
  if(comebackSide===null){hint.textContent='При первом анализе будет выбрана сторона, которой сейчас ходить. Она начнёт с ослабленной игры (Skill Level 4); когда отставание достигнет примерно 2 пешек, программа пересчитает позицию и перейдёт на полную силу.';return;}
  hint.textContent='Сторона Comeback: '+(comebackSide==='w'?'белые':'чёрные')+'. На её ходах — ослабленная, но рассчитанная игра (Skill Level 4); на ходах соперника — полная сила. При отставании около 2 пешек включится максимальная сила.';
 }
-function setPosition(fen,preserveComeback=false){if(!preserveComeback)resetComebackState();else{activeSearch=null;pendingSearch=null;updateModeHint();}boardState=parseFEN(fen);gameEnded=false;editorUndoStack=[];updateEditorUndoButton();$('fenInput').value=toFEN(boardState);drawBoard();updateGameEndState();$('pvLine').textContent='Позиция загружена. Нажми «Анализировать».';$('moveResult').querySelector('strong')?.remove();$('engineDepth').textContent='Позиция готова';lastBest=null;moveHistory=[];redoHistory=[];updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';}
+function setPosition(fen,preserveComeback=false){if(!preserveComeback)resetComebackState();else{activeSearch=null;pendingSearch=null;updateModeHint();}boardState=parseFEN(fen);gameEnded=false;pendingFrom=null;pendingLegalMoves=[];editorUndoStack=[];updateEditorUndoButton();$('fenInput').value=toFEN(boardState);drawBoard();updateGameEndState();$('pvLine').textContent='Позиция загружена. Нажми «Анализировать».';$('moveResult').querySelector('strong')?.remove();$('engineDepth').textContent='Позиция готова';lastBest=null;moveHistory=[];redoHistory=[];updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';}
 function clearArrow(){const a=$('bestArrow');a.setAttribute('opacity','0');lastBest=null;plannerArrow=null;drawPlannerCanvas();}
 function drawArrow(from,to){
  const a=$('bestArrow');let idx=s=>({r:8-Number(s[1]),c:s.charCodeAt(0)-97});let f=idx(from),t=idx(to);let fv=flipped?{r:7-f.r,c:7-f.c}:f,tv=flipped?{r:7-t.r,c:7-t.c}:t;
@@ -858,7 +894,7 @@ function undoEditorAction(){
 }
 function enableEditor(on){
  editing=on;
- if(on){pendingFrom=null;gameEnded=false;const overlay=$('gameEndOverlay');if(overlay)overlay.hidden=true;}
+ if(on){pendingFrom=null;pendingLegalMoves=[];gameEnded=false;const overlay=$('gameEndOverlay');if(overlay)overlay.hidden=true;}
  $('editorArea').hidden=!on;
  $('editState').textContent=on?'Редактор включён':'Выключен';
  $('editBtn').textContent=on?'Закрыть редактор':'Открыть редактор';
@@ -1002,7 +1038,7 @@ $('themeLightBtn').onclick=()=>setTheme('light');
 $('themeDarkBtn').onclick=()=>setTheme('dark');
 $('pieceSetSelect').addEventListener('change',()=>setPieceSet($('pieceSetSelect').value));
 $('clearBoardBtn').onclick=()=>{
- if(boardState.board.some(Boolean)){pushEditorSnapshot();boardState.board=Array(64).fill(null);boardState.ep='-';boardState.half='0';moveHistory=[];redoHistory=[];updateMoveHistory();drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();}
+ if(boardState.board.some(Boolean)){pushEditorSnapshot();boardState.board=Array(64).fill(null);boardState.ep='-';boardState.half='0';gameEnded=false;moveHistory=[];redoHistory=[];updateMoveHistory();drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();}
 };
 $('editorUndoBtn').onclick=undoEditorAction;
 $('analyzeBtn').onclick=analyze;
