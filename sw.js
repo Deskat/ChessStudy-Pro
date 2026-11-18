@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-study-pro-iphone-v10';
+const CACHE_NAME = 'chess-study-pro-iphone-v11';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './pieces/cburnett/wK.svg', './pieces/cburnett/wQ.svg', './pieces/cburnett/wR.svg', './pieces/cburnett/wB.svg', './pieces/cburnett/wN.svg', './pieces/cburnett/wP.svg', './pieces/cburnett/bK.svg', './pieces/cburnett/bQ.svg', './pieces/cburnett/bR.svg', './pieces/cburnett/bB.svg', './pieces/cburnett/bN.svg', './pieces/cburnett/bP.svg', './pieces/cburnett-v2/CBurnettV2_100.png'];
 
 self.addEventListener('install', event => {
