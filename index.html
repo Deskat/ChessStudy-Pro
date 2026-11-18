@@ -213,44 +213,9 @@ html[data-theme="dark"] .files-coords{color:#d5b58c}
 .game-end-pill.victory{top:51%;color:#7fa65d;font-size:22px;padding:8px 22px}
 .game-end-crown{width:27px;height:24px;display:block;flex:none}
 html[data-theme="dark"] .game-end-pill{background:#f7f6ef}
-.move-guide{margin-top:16px;border:1px solid #e4e9e1;border-radius:14px;background:#f8f9f5;overflow:hidden}
-.move-guide>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 15px;cursor:pointer;color:#48574b;font-size:14px;font-weight:700}
-.move-guide>summary::-webkit-details-marker{display:none}
-.move-guide>summary:after{content:"＋";color:#829986;font-size:18px;font-weight:400}
-.move-guide[open]>summary:after{content:"−"}
-.move-guide-subtitle{margin-left:auto;color:#879188;font-size:11px;font-weight:500}
-.move-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 11px 12px}
-.move-guide-card{display:grid;grid-template-columns:88px minmax(0,1fr);gap:10px;align-items:center;min-width:0;padding:10px;border:1px solid #e5e9e1;border-radius:11px;background:#fffefa}
-.move-demo-board{width:88px;height:88px;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);overflow:hidden;border-radius:5px;border:1px solid #d4dacf}
-.move-demo-cell{position:relative;display:grid;place-items:center;min-width:0;min-height:0}
-.move-demo-cell.light{background:#f0d9b5}
-.move-demo-cell.dark{background:#b58863}
-.move-demo-cell.origin img{width:88%;height:88%;object-fit:contain}
-.move-demo-cell.target:after{content:"";width:27%;height:27%;border-radius:50%;background:rgba(70,112,82,.72);box-shadow:0 0 0 1px rgba(255,255,255,.35)}
-.move-demo-cell.capture:after{content:"";width:72%;height:72%;border:3px solid rgba(70,112,82,.78);border-radius:50%;box-sizing:border-box;background:transparent}
-.move-guide-copy{min-width:0}
-.move-guide-copy strong{display:block;margin-bottom:4px;color:#3f4c42;font-size:13px}
-.move-guide-copy p{margin:0;color:#727e74;font-size:11px;line-height:1.45}
-html[data-theme="dark"] .move-guide{background:#20291f;border-color:#3c4939}
-html[data-theme="dark"] .move-guide>summary{color:#e1eadd}
-html[data-theme="dark"] .move-guide-subtitle{color:#9aa795}
-html[data-theme="dark"] .move-guide-card{background:#293329;border-color:#414e3f}
-html[data-theme="dark"] .move-guide-copy strong{color:#e2e9df}
-html[data-theme="dark"] .move-guide-copy p{color:#b6c0b2}
-@media(max-width:560px){
- .move-guide-grid{grid-template-columns:1fr}
- .move-guide-card{grid-template-columns:88px minmax(0,1fr)}
-}
-
-.sq.legal-target::after{content:"";position:absolute;left:50%;top:50%;width:25%;height:25%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(47,75,54,.48);z-index:1;pointer-events:none}
-.sq.legal-capture::after{content:"";position:absolute;left:50%;top:50%;width:86%;height:86%;transform:translate(-50%,-50%);border-radius:50%;border:5px solid rgba(47,75,54,.48);box-sizing:border-box;background:transparent;z-index:1;pointer-events:none}
-html[data-theme="dark"] .sq.legal-target::after{background:rgba(205,225,196,.58)}
-html[data-theme="dark"] .sq.legal-capture::after{border-color:rgba(205,225,196,.58)}
-.game-result-banner{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px auto 0;padding:11px 14px;width:fit-content;max-width:100%;border-radius:999px;background:#fffefa;color:#df5146;font-size:16px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.game-result-banner[hidden]{display:none!important}
-.game-result-banner .result-victory{color:#7fa65d}
-html[data-theme="dark"] .game-result-banner{background:#f7f6ef}
-.board-wrap{isolation:isolate}
+.sq.legal-target::after,.sq.legal-capture::after{content:"";position:absolute;left:50%;top:50%;width:18%;height:18%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(112,118,113,.48);border:0;box-shadow:0 0 0 1px rgba(255,255,255,.18);z-index:3;pointer-events:none}
+html[data-theme="dark"] .sq.legal-target::after,html[data-theme="dark"] .sq.legal-capture::after{background:rgba(207,213,204,.46);box-shadow:0 0 0 1px rgba(20,30,20,.18)}
+html[data-theme="dark"] .board-wrap{isolation:isolate}
 .game-end-overlay{z-index:12}
 .game-end-pill{z-index:13}
 /* App identity uses a proper SVG knight from the active chess set. */
@@ -280,10 +245,11 @@ html[data-theme="dark"] .sq.legal-capture::after{border-color:rgba(206,231,188,.
 .result-confetti:nth-child(3n + 1){background:#8eafbd}
 .result-confetti:nth-child(4n){border-radius:50%;width:5px;height:5px}
 @keyframes result-confetti-fall{0%{transform:translateY(0) rotate(var(--confetti-rotate,0deg));opacity:0}12%{opacity:.9}100%{transform:translateY(115vh) rotate(calc(var(--confetti-rotate,0deg) + 420deg));opacity:0}}
-.game-result-banner{width:100%;max-width:620px;margin:12px auto 0;min-height:44px}
-.result-separator{color:#9aa195}
-.game-result-banner .result-victory{color:#719e51}
 @media(prefers-reduced-motion:reduce){.king-result-tag,.result-confetti{animation:none;opacity:1}}
+
+.piece.victory-king-spin{z-index:6;transform-origin:center;animation:chesscom-winner-spin 1.35s cubic-bezier(.18,.78,.26,1) both;filter:drop-shadow(0 0 7px rgba(210,190,110,.75))}
+@keyframes chesscom-winner-spin{0%{transform:rotate(0deg) scale(1)}22%{transform:rotate(180deg) scale(1.2)}52%{transform:rotate(360deg) scale(1.12)}78%{transform:rotate(540deg) scale(1.16)}100%{transform:rotate(720deg) scale(1)}}
+@media(prefers-reduced-motion:reduce){.piece.victory-king-spin{animation:none;filter:drop-shadow(0 0 5px rgba(210,190,110,.65))}}
 
 </style>
 </head>
@@ -315,7 +281,6 @@ html[data-theme="dark"] .sq.legal-capture::after{border-color:rgba(206,231,188,.
       <noscript><div class="status error" style="margin-top:10px">Показана только начальная расстановка. Для ходов и анализа открой эту страницу в Safari по HTTPS: предпросмотр файлов не запускает JavaScript.</div></noscript><svg class="arrows" id="arrows" viewBox="0 0 800 800" preserveAspectRatio="none"><defs><marker id="arrowHead" markerWidth="4" markerHeight="4" refX="3.2" refY="2" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L4,2 L0,4 Z" fill="#f3c94f"/></marker></defs><line id="bestArrow" x1="0" y1="0" x2="0" y2="0" stroke="#f3c94f" stroke-width="7" stroke-linecap="round" marker-end="url(#arrowHead)" opacity="0"/></svg><div class="game-end-overlay" id="gameEndOverlay" hidden aria-live="polite"></div></div>
       <div class="files-coords" id="filesCoords" aria-hidden="true"></div>
       <div class="board-caption"><span id="engineDepth">Не запущен</span></div>
-      <div class="game-result-banner" id="gameResultBanner" hidden role="status" aria-live="assertive"></div>
       <div class="hint move-entry-hint">Нажми на фигуру — допустимые клетки её хода будут отмечены на доске.</div>
       <div class="row move-history-actions" style="margin-top:9px">
         <button type="button" class="btn subtle" id="undoMoveBtn" disabled>↶ Отменить ход</button>
@@ -326,10 +291,6 @@ html[data-theme="dark"] .sq.legal-capture::after{border-color:rgba(206,231,188,.
         <div class="row" style="margin-top:10px"><button type="button" class="btn primary" id="playBestBtn" disabled>Сделать ход</button></div>
       </div>
       <div id="moveHistory" hidden></div>
-      <details class="move-guide" id="moveGuide">
-        <summary><span>Как ходят фигуры</span><span class="move-guide-subtitle">Показать правила</span></summary>
-        <div class="move-guide-grid" id="moveGuideGrid"></div>
-      </details>
     </section>
     <aside class="controls">
       <div class="internal-state" hidden aria-hidden="true">
@@ -422,7 +383,6 @@ function pieceImageMarkup(ch){
 function setPieceSet(value){
  selectedPieceSet=value==='cburnett-v2'?'cburnett-v2':'cburnett';
  try{localStorage.setItem('chess-study-piece-set',selectedPieceSet);}catch(_){}
- if($('moveGuideGrid'))initMoveGuide();
  const select=$('pieceSetSelect');
  if(select)select.value=selectedPieceSet;
  const brandIcon=$('brandPieceIcon');
@@ -437,38 +397,7 @@ let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow
 let chessVisionPromise=null, chessVision=null, lastRecognition=null;
 let pendingFrom=null, pendingLegalMoves=[], moveHistory=[], redoHistory=[], gameEnded=false;
 const $=id=>document.getElementById(id);
-function initMoveGuide(){
- const root=$('moveGuideGrid');if(!root)return;
- const center=[2,2];
- const rays=(dirs)=>{const points=[];for(const [dr,dc] of dirs){for(let n=1;n<=2;n++)points.push([center[0]+dr*n,center[1]+dc*n]);}return points;};
- const queenDirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
- const data=[
-  {piece:'K',title:'Король',text:'На одну клетку в любом направлении.',targets:[[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3]]},
-  {piece:'Q',title:'Ферзь',text:'По прямой и диагонали на любое число свободных клеток.',targets:rays(queenDirs)},
-  {piece:'R',title:'Ладья',text:'По горизонтали и вертикали на любое число свободных клеток.',targets:rays([[1,0],[-1,0],[0,1],[0,-1]])},
-  {piece:'B',title:'Слон',text:'По диагонали на любое число свободных клеток.',targets:rays([[1,1],[1,-1],[-1,1],[-1,-1]])},
-  {piece:'N',title:'Конь',text:'Буквой «Г»: две клетки в одну сторону и одна вбок. Может перепрыгивать фигуры.',targets:[[0,1],[0,3],[1,0],[1,4],[3,0],[3,4],[4,1],[4,3]]},
-  {piece:'P',title:'Пешка',text:'Вперёд на одну клетку, с начальной позиции — на две. Бьёт по диагонали.',targets:[[1,2],[0,2]],captures:[[1,1],[1,3]]}
- ];
- root.innerHTML='';
- for(const item of data){
-  const card=document.createElement('article');card.className='move-guide-card';
-  const demo=document.createElement('div');demo.className='move-demo-board';
-  const targetSet=new Set((item.targets||[]).map(([r,c])=>r+','+c));
-  const captureSet=new Set((item.captures||[]).map(([r,c])=>r+','+c));
-  for(let r=0;r<5;r++)for(let c=0;c<5;c++){
-   const cell=document.createElement('div');cell.className='move-demo-cell '+((r+c)%2===0?'light':'dark');
-   if(r===2&&c===2){cell.classList.add('origin');cell.innerHTML=pieceImageMarkup(item.piece);}
-   else if(targetSet.has(r+','+c))cell.classList.add('target');
-   else if(captureSet.has(r+','+c))cell.classList.add('capture');
-   demo.appendChild(cell);
-  }
-  const copy=document.createElement('div');copy.className='move-guide-copy';
-  const title=document.createElement('strong');title.textContent=item.title;
-  const desc=document.createElement('p');desc.textContent=item.text;
-  copy.append(title,desc);card.append(demo,copy);root.appendChild(card);
- }
-}
+
 function setTheme(theme){
  const value=theme==='dark'?'dark':'light';
  document.documentElement.dataset.theme=value;
@@ -701,8 +630,17 @@ function buildResultConfetti(){
  }
  return html;
 }
+function animateWinningKing(piece){
+ const index=boardState.board.indexOf(piece);if(index<0)return;
+ const row=Math.floor(index/8),col=index%8;
+ const node=$('board').querySelector('.sq[data-r="'+row+'"][data-c="'+col+'"] .piece');
+ if(!node)return;
+ node.classList.remove('victory-king-spin');
+ void node.offsetWidth;
+ node.classList.add('victory-king-spin');
+}
 function updateGameEndState(){
- const overlay=$('gameEndOverlay'),banner=$('gameResultBanner');
+ const overlay=$('gameEndOverlay');
  if(!boardState)return;
  const side=boardState.turn;
  const checked=kingIsInCheck(boardState.board,side);
@@ -714,18 +652,16 @@ function updateGameEndState(){
   if(checked){
    const loser=side==='w'?'K':'k',winner=side==='w'?'k':'K';
    if(overlay)overlay.innerHTML=resultKingTag(loser,'Мат','loss',cross)+resultKingTag(winner,'Победа','win',crown)+buildResultConfetti();
-   if(banner){banner.innerHTML='<strong>Мат</strong><span class="result-separator">·</span><span class="result-victory">Победа '+(side==='w'?'чёрных':'белых')+'</span>';banner.hidden=false;}
+   animateWinningKing(winner);
    setStatus('Мат. Победа '+(side==='w'?'чёрных':'белых')+'.','ok');
   }else{
    const drawMark='<svg class="king-draw-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M5 14h18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>';
    if(overlay)overlay.innerHTML=resultKingTag('K','Пат','draw',drawMark)+resultKingTag('k','Пат','draw',drawMark);
-   if(banner){banner.innerHTML='<strong>Пат</strong><span class="result-separator">·</span><span class="result-victory">Ничья</span>';banner.hidden=false;}
    setStatus('Пат. Ничья.','ok');
   }
   if(overlay)overlay.hidden=false;
  }else{
   if(overlay){overlay.hidden=true;overlay.innerHTML='';}
-  if(banner){banner.hidden=true;banner.innerHTML='';}
   gameEnded=false;
  }
 }
@@ -1033,8 +969,7 @@ function handleInfo(line){
   if(sc){if(sc[1]==='mate')evalText='мат '+(Number(sc[2])>0?'через ':'противника через ')+Math.abs(Number(sc[2]));else{let n=Number(sc[2])/100;evalText=(n>0?'+':'')+n.toFixed(2);}}
   const lineText=pv[1].trim();pvLines[index]={score:evalText,pv:lineText};
   if(index===1)lastPv=lineText;
-  const rows=Object.keys(pvLines).map(Number).sort((a,b)=>a-b).map(i=>`${i}. ${pvLines[i].score?('['+pvLines[i].score+'] '):''}${pvLines[i].pv}`);
-  $('pvLine').textContent=rows.length?'Лучшие варианты:\n'+rows.join('\n'):'Stockfish анализирует…';
+  $('pvLine').textContent='';
  }
 }
 function handleBest(line){
@@ -1057,8 +992,7 @@ function handleBest(line){
  const weakMove=playMode==='comeback'&&!comebackActivated&&comebackSide===boardState.turn;
  let strong=$('moveResult').querySelector('strong');if(!strong){strong=document.createElement('strong');$('moveResult').prepend(strong);}
  strong.textContent=(weakMove?'Ослабленный, но обдуманный ход: ':playMode==='comeback'?'Comeback — сильный ход: ':'Лучший ход: ')+text;
- const rows=Object.keys(pvLines).map(Number).sort((a,b)=>a-b).map(i=>`${i}. ${pvLines[i].score?('['+pvLines[i].score+'] '):''}${pvLines[i].pv}`);
- $('pvLine').textContent=rows.length?'Лучшие варианты:\n'+rows.join('\n'):'Вариант: '+(lastPv||text);
+ $('pvLine').textContent='';
  $('playBestBtn').disabled=false;$('playBestBtn').dataset.uci=from+to+promo;
  $('playBestBtn').textContent=weakMove?'Сделать ход':'Сделать ход';
  if(weakMove)setStatus('Comeback: выбран ослабленный, но рассчитанный ход. После отставания примерно на 2 пешки движок перейдёт на полную силу.','ok');
@@ -1112,7 +1046,7 @@ selectedPieceSet=savedPieceSet==='cburnett-v2'?'cburnett-v2':'cburnett';
 $('pieceSetSelect').value=selectedPieceSet;
 $('brandPieceIcon').src='./pieces/'+selectedPieceSet+'/wN.svg';
 pendingFrom=null;
-initPalette();boardState=parseFEN(START_FEN);drawBoard();initMoveGuide();updateEditorUndoButton();setTheme(savedTheme);updateModeHint();
+initPalette();boardState=parseFEN(START_FEN);drawBoard();updateEditorUndoButton();setTheme(savedTheme);updateModeHint();
 window.addEventListener('resize',()=>{if(lastBest)drawArrow(lastBest.from,lastBest.to);});
 // Installable Safari/PWA shell. The app requires HTTPS for service workers.
 if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
