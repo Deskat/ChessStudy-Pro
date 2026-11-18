@@ -51,6 +51,32 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Validate the app script and simplified interface
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync("index.html", "utf8");
+          const script = html.match(/<script>\\s*([\\s\\S]*?)<\\/script>/);
+          if (!script) throw new Error("Main app script was not found.");
+          fs.writeFileSync("/tmp/chess-study-app.js", script[1]);
+
+          const checks = [
+            ["FEN drawer remains available", /<details class="panel fen-panel" id="fenPanel">/.test(html)],
+            ["Screenshot panel is hidden", /id="plannerPanel" hidden/.test(html)],
+            ["How-to section is removed", !html.includes("Как пользоваться")],
+            ["Move history is not visible", !html.includes("История ходов")],
+            ["History target remains for undo logic", /id="moveHistory" hidden/.test(html)],
+            ["Calm light theme is active", html.includes("--bg:#f4f3ee")],
+          ];
+          for (const [label, ok] of checks) {
+            console.log((ok ? "OK " : "FAIL ") + label);
+            if (!ok) process.exitCode = 1;
+          }
+          NODE
+          node --check /tmp/chess-study-app.js
+
       - name: Smoke-test Lite and Full Stockfish with UCI
         shell: bash
         run: |
