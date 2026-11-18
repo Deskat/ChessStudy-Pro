@@ -91,6 +91,88 @@ body{color:var(--text);background:#f4f3ee;font-family:-apple-system,BlinkMacSyst
 }
 @media(min-width:851px){.boardpanel{position:sticky;top:18px}}
 
+
+/* Board, pieces and editor refresh */
+.board-tools{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.theme-switch{display:flex;align-items:center;gap:4px;padding:4px;border:1px solid #e2e7df;border-radius:999px;background:#eef1eb;flex-shrink:0}
+.theme-btn{border:0;border-radius:999px;background:transparent;color:#647064;padding:8px 12px;font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;cursor:pointer;white-space:nowrap}
+.theme-btn.active{background:#fffefa;color:#3f5844;box-shadow:0 1px 4px rgba(35,48,36,.12)}
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="dark"] body{background:#171b17;color:#e6ece4}
+html[data-theme="dark"] .panel{background:#222820;border-color:#394236;box-shadow:0 3px 14px rgba(0,0,0,.18)}
+html[data-theme="dark"] .brand h1,html[data-theme="dark"] .turn{color:#e6ece4}
+html[data-theme="dark"] .muted,html[data-theme="dark"] .board-caption{color:#a0ab9d}
+html[data-theme="dark"] .section-title{color:#e2e9df}
+html[data-theme="dark"] .theme-switch{background:#252d24;border-color:#3a4538}
+html[data-theme="dark"] .theme-btn{color:#c2cdbd}
+html[data-theme="dark"] .theme-btn.active{background:#3a4838;color:#f2f6ed;box-shadow:none}
+html[data-theme="dark"] .btn{background:#2b352a;border-color:#455242;color:#e6ece3}
+html[data-theme="dark"] .btn:hover{background:#344131;border-color:#61745d}
+html[data-theme="dark"] .btn.primary{background:#637f68;border-color:#637f68;color:#fff}
+html[data-theme="dark"] .btn.subtle{background:#252d24;border-color:#3a4538;color:#cbd5c7}
+html[data-theme="dark"] .field,html[data-theme="dark"] .select{background:#171d17;border-color:#414c3e;color:#e6ece4}
+html[data-theme="dark"] .label{color:#aeb9a9}
+html[data-theme="dark"] .status{background:#293329;border-color:#3d4c3b;color:#d0dfcb}
+html[data-theme="dark"] .status.ok{background:#253329;border-color:#3d6047;color:#c2e2c6}
+html[data-theme="dark"] .status.error{background:#382a29;border-color:#684341;color:#f2c2bd}
+html[data-theme="dark"] .status.loading{background:#383326;border-color:#665a39;color:#ead8a9}
+html[data-theme="dark"] .move-result{background:#252d24;border-color:#3a4538}
+html[data-theme="dark"] .move-result .pv{color:#c5d0c1}
+html[data-theme="dark"] .divider{background:#3a4538}
+html[data-theme="dark"] .editor-description{color:#a9b5a5}
+html[data-theme="dark"] .editor-state{background:#2a3329;border-color:#3c4a39;color:#c7d5c2}
+html[data-theme="dark"] .palette-group{border-color:#414b3e}
+html[data-theme="dark"] .palette-group.white-group{background:#2d362b}
+html[data-theme="dark"] .palette-group.black-group{background:#171d17}
+html[data-theme="dark"] .palette-group-title{color:#dce5d8}
+html[data-theme="dark"] .piece-choice{background:#303a2f;border-color:#4b5948}
+html[data-theme="dark"] .piece-choice.active{background:#3b4c39;border-color:#9bb394}
+html[data-theme="dark"] .piece-choice.empty{color:#e3e9df}
+html[data-theme="dark"] .board-wrap{border-color:#685842;box-shadow:0 5px 18px rgba(0,0,0,.24)}
+/* Keep the board palette consistent and close to the reference */
+.sq.light{background:#f0d9b5;color:#30251b}
+.sq.dark{background:#b58863;color:#211a14}
+.sq.light .coord{color:#805f42}
+.sq.dark .coord{color:#fff4df}
+.piece{display:flex;align-items:center;justify-content:center;width:91%;height:91%;font-size:0;line-height:1;text-shadow:none}
+.piece-svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 0 rgba(0,0,0,.12))}
+.editor-panel{grid-column:1/-1;margin-top:0}
+.editor-head{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.editor-head .section-title{margin-bottom:5px}
+.editor-description{margin:0;color:#7b867c;font-size:13px;line-height:1.5}
+.editor-head-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.editor-state{font-size:12px;color:#6a7869;background:#f0f4ed;border:1px solid #e1e8dd;border-radius:999px;padding:7px 10px}
+.palette{display:grid;grid-template-columns:1fr;gap:11px;margin-top:17px}
+.palette-group{border:1px solid #e4e9e1;border-radius:13px;padding:11px;background:#f7f8f4}
+.palette-group.black-group{background:#39443a;border-color:#39443a}
+.palette-group-title{font-size:12px;font-weight:700;color:#5d6b5d;margin:0 0 9px}
+.palette-group.black-group .palette-group-title{color:#f0f4ed}
+.palette-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.piece-choice{width:100%;min-width:0;aspect-ratio:1/1;height:auto;padding:5px;border:1px solid #dfe6dc;border-radius:10px;background:#fffefa;display:grid;place-items:center;cursor:pointer}
+.piece-choice svg{display:block;width:100%;height:100%;max-width:48px;max-height:48px}
+.palette-group.black-group .piece-choice{background:#515d50;border-color:#687565}
+.piece-choice.active{border:2px solid #748e77;background:#edf3eb}
+.palette-tools{display:flex;justify-content:flex-start;margin-top:11px}
+.piece-choice.empty{display:flex;align-items:center;justify-content:center;gap:8px;aspect-ratio:auto;width:auto;min-height:42px;padding:8px 13px;background:#f4f6f1;color:#5c6a5d;font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.empty-icon{font-size:20px;line-height:1}
+.editor-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px;padding-top:13px;border-top:1px solid #e8ece5}
+@media(max-width:850px){
+ .head{align-items:center;gap:10px}
+ .theme-btn{padding:8px 9px;font-size:11px}
+ .board-top{align-items:flex-start}
+ .board-tools{gap:6px}
+ .board-tools .btn{min-height:38px;padding:8px 9px;font-size:12px}
+ .editor-head{align-items:flex-start;flex-direction:column;gap:10px}
+ .editor-head-actions{width:100%;justify-content:space-between}
+ .editor-panel{grid-column:1}
+ .palette-row{gap:6px}
+ .piece-choice{padding:4px;border-radius:8px}
+}
+@media(max-width:390px){
+ .theme-btn{padding:7px 8px;font-size:10px}
+ .board-tools .btn{font-size:11px;padding:7px 8px}
+}
+
 </style>
 </head>
 <body>
@@ -100,13 +182,17 @@ body{color:var(--text);background:#f4f3ee;font-family:-apple-system,BlinkMacSyst
   </div>
   <header class="head">
     <div class="brand"><div class="logo" aria-hidden="true">♞</div><div><h1>Chess Study</h1></div></div>
+    <div class="theme-switch" role="group" aria-label="Тема оформления">
+      <button type="button" class="theme-btn" id="themeLightBtn" aria-pressed="true">☀ Светлая</button>
+      <button type="button" class="theme-btn" id="themeDarkBtn" aria-pressed="false">☾ Тёмная</button>
+    </div>
   </header>
   <main class="layout">
     <section class="panel boardpanel">
-      <div class="board-top"><div><div class="turn" id="turnLabel">Ход белых</div><div class="muted small" id="fenShort">Начальная позиция</div></div><button type="button" class="btn subtle" id="flipBtn">↻ Перевернуть</button></div>
+      <div class="board-top"><div><div class="turn" id="turnLabel">Ход белых</div><div class="muted small" id="fenShort">Начальная позиция</div></div><div class="board-tools"><button type="button" class="btn subtle" id="startBtn">Начальная позиция</button><button type="button" class="btn subtle" id="flipBtn">↻ Перевернуть</button></div></div>
       <div class="board-wrap" id="boardWrap"><div class="board" id="board" aria-label="Шахматная доска"><div class="sq light" data-r="0" data-c="0" data-square="a8" aria-label="a8"><span class="piece black">♜</span><span class="coord">8</span></div><div class="sq dark" data-r="0" data-c="1" data-square="b8" aria-label="b8"><span class="piece black">♞</span></div><div class="sq light" data-r="0" data-c="2" data-square="c8" aria-label="c8"><span class="piece black">♝</span></div><div class="sq dark" data-r="0" data-c="3" data-square="d8" aria-label="d8"><span class="piece black">♛</span></div><div class="sq light" data-r="0" data-c="4" data-square="e8" aria-label="e8"><span class="piece black">♚</span></div><div class="sq dark" data-r="0" data-c="5" data-square="f8" aria-label="f8"><span class="piece black">♝</span></div><div class="sq light" data-r="0" data-c="6" data-square="g8" aria-label="g8"><span class="piece black">♞</span></div><div class="sq dark" data-r="0" data-c="7" data-square="h8" aria-label="h8"><span class="piece black">♜</span></div><div class="sq dark" data-r="1" data-c="0" data-square="a7" aria-label="a7"><span class="piece black">♟</span><span class="coord">7</span></div><div class="sq light" data-r="1" data-c="1" data-square="b7" aria-label="b7"><span class="piece black">♟</span></div><div class="sq dark" data-r="1" data-c="2" data-square="c7" aria-label="c7"><span class="piece black">♟</span></div><div class="sq light" data-r="1" data-c="3" data-square="d7" aria-label="d7"><span class="piece black">♟</span></div><div class="sq dark" data-r="1" data-c="4" data-square="e7" aria-label="e7"><span class="piece black">♟</span></div><div class="sq light" data-r="1" data-c="5" data-square="f7" aria-label="f7"><span class="piece black">♟</span></div><div class="sq dark" data-r="1" data-c="6" data-square="g7" aria-label="g7"><span class="piece black">♟</span></div><div class="sq light" data-r="1" data-c="7" data-square="h7" aria-label="h7"><span class="piece black">♟</span></div><div class="sq light" data-r="2" data-c="0" data-square="a6" aria-label="a6"><span class="coord">6</span></div><div class="sq dark" data-r="2" data-c="1" data-square="b6" aria-label="b6"></div><div class="sq light" data-r="2" data-c="2" data-square="c6" aria-label="c6"></div><div class="sq dark" data-r="2" data-c="3" data-square="d6" aria-label="d6"></div><div class="sq light" data-r="2" data-c="4" data-square="e6" aria-label="e6"></div><div class="sq dark" data-r="2" data-c="5" data-square="f6" aria-label="f6"></div><div class="sq light" data-r="2" data-c="6" data-square="g6" aria-label="g6"></div><div class="sq dark" data-r="2" data-c="7" data-square="h6" aria-label="h6"></div><div class="sq dark" data-r="3" data-c="0" data-square="a5" aria-label="a5"><span class="coord">5</span></div><div class="sq light" data-r="3" data-c="1" data-square="b5" aria-label="b5"></div><div class="sq dark" data-r="3" data-c="2" data-square="c5" aria-label="c5"></div><div class="sq light" data-r="3" data-c="3" data-square="d5" aria-label="d5"></div><div class="sq dark" data-r="3" data-c="4" data-square="e5" aria-label="e5"></div><div class="sq light" data-r="3" data-c="5" data-square="f5" aria-label="f5"></div><div class="sq dark" data-r="3" data-c="6" data-square="g5" aria-label="g5"></div><div class="sq light" data-r="3" data-c="7" data-square="h5" aria-label="h5"></div><div class="sq light" data-r="4" data-c="0" data-square="a4" aria-label="a4"><span class="coord">4</span></div><div class="sq dark" data-r="4" data-c="1" data-square="b4" aria-label="b4"></div><div class="sq light" data-r="4" data-c="2" data-square="c4" aria-label="c4"></div><div class="sq dark" data-r="4" data-c="3" data-square="d4" aria-label="d4"></div><div class="sq light" data-r="4" data-c="4" data-square="e4" aria-label="e4"></div><div class="sq dark" data-r="4" data-c="5" data-square="f4" aria-label="f4"></div><div class="sq light" data-r="4" data-c="6" data-square="g4" aria-label="g4"></div><div class="sq dark" data-r="4" data-c="7" data-square="h4" aria-label="h4"></div><div class="sq dark" data-r="5" data-c="0" data-square="a3" aria-label="a3"><span class="coord">3</span></div><div class="sq light" data-r="5" data-c="1" data-square="b3" aria-label="b3"></div><div class="sq dark" data-r="5" data-c="2" data-square="c3" aria-label="c3"></div><div class="sq light" data-r="5" data-c="3" data-square="d3" aria-label="d3"></div><div class="sq dark" data-r="5" data-c="4" data-square="e3" aria-label="e3"></div><div class="sq light" data-r="5" data-c="5" data-square="f3" aria-label="f3"></div><div class="sq dark" data-r="5" data-c="6" data-square="g3" aria-label="g3"></div><div class="sq light" data-r="5" data-c="7" data-square="h3" aria-label="h3"></div><div class="sq light" data-r="6" data-c="0" data-square="a2" aria-label="a2"><span class="piece white">♙</span><span class="coord">2</span></div><div class="sq dark" data-r="6" data-c="1" data-square="b2" aria-label="b2"><span class="piece white">♙</span></div><div class="sq light" data-r="6" data-c="2" data-square="c2" aria-label="c2"><span class="piece white">♙</span></div><div class="sq dark" data-r="6" data-c="3" data-square="d2" aria-label="d2"><span class="piece white">♙</span></div><div class="sq light" data-r="6" data-c="4" data-square="e2" aria-label="e2"><span class="piece white">♙</span></div><div class="sq dark" data-r="6" data-c="5" data-square="f2" aria-label="f2"><span class="piece white">♙</span></div><div class="sq light" data-r="6" data-c="6" data-square="g2" aria-label="g2"><span class="piece white">♙</span></div><div class="sq dark" data-r="6" data-c="7" data-square="h2" aria-label="h2"><span class="piece white">♙</span></div><div class="sq dark" data-r="7" data-c="0" data-square="a1" aria-label="a1"><span class="piece white">♖</span><span class="coord">1</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">a</span></div><div class="sq light" data-r="7" data-c="1" data-square="b1" aria-label="b1"><span class="piece white">♘</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">b</span></div><div class="sq dark" data-r="7" data-c="2" data-square="c1" aria-label="c1"><span class="piece white">♗</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">c</span></div><div class="sq light" data-r="7" data-c="3" data-square="d1" aria-label="d1"><span class="piece white">♕</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">d</span></div><div class="sq dark" data-r="7" data-c="4" data-square="e1" aria-label="e1"><span class="piece white">♔</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">e</span></div><div class="sq light" data-r="7" data-c="5" data-square="f1" aria-label="f1"><span class="piece white">♗</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">f</span></div><div class="sq dark" data-r="7" data-c="6" data-square="g1" aria-label="g1"><span class="piece white">♘</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">g</span></div><div class="sq light" data-r="7" data-c="7" data-square="h1" aria-label="h1"><span class="piece white">♖</span><span class="coord" style="left:auto;top:auto;right:4px;bottom:2px">h</span></div></div>
       <noscript><div class="status error" style="margin-top:10px">Показана только начальная расстановка. Для ходов и анализа открой эту страницу в Safari по HTTPS: предпросмотр файлов не запускает JavaScript.</div></noscript><svg class="arrows" id="arrows" viewBox="0 0 800 800" preserveAspectRatio="none"><defs><marker id="arrowHead" markerWidth="7" markerHeight="7" refX="5.4" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3.5 L0,7 Z" fill="#f3c94f"/></marker></defs><line id="bestArrow" x1="0" y1="0" x2="0" y2="0" stroke="#f3c94f" stroke-width="15" stroke-linecap="round" marker-end="url(#arrowHead)" opacity="0"/></svg></div>
-      <div class="board-caption"><span>Позиция</span><span id="engineDepth">Не запущен</span></div>
+      <div class="board-caption"><span id="engineDepth">Не запущен</span></div>
       <div class="row" style="margin-top:12px;justify-content:space-between">
         <button type="button" class="btn" id="moveModeBtn">Ходы на доске</button>
         <span class="muted small" id="moveModeState">Выключен</span>
@@ -123,28 +209,11 @@ body{color:var(--text);background:#f4f3ee;font-family:-apple-system,BlinkMacSyst
       <div id="moveHistory" hidden></div>
     </section>
     <aside class="controls">
-      <details class="panel fen-panel" id="fenPanel">
-        <summary class="fen-summary">FEN</summary>
-        <div class="fen-content">
-        <label class="label" for="fenInput">FEN-позиция</label>
-        <textarea class="field" id="fenInput" rows="3" spellcheck="false">rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</textarea>
-        <div class="row" style="margin-top:9px"><button type="button" class="btn" id="loadFenBtn">Загрузить FEN</button><button type="button" class="btn" id="copyFenBtn">Копировать FEN</button><button type="button" class="btn subtle" id="startBtn">Начальная позиция</button></div>
-        <div class="hint">FEN можно скопировать из анализа завершённой партии или из шахматной доски-редактора.</div>
-              </div>
-      </details>
-      <section class="panel">
-        <h2 class="section-title">Редактор доски</h2>
-        <div class="row"><button type="button" class="btn" id="editBtn">Включить редактор</button><span class="muted small" id="editState">Выключен</span></div>
-        <div id="editorArea" hidden>
-          <div class="hint">Выбери фигуру, затем нажми на клетку. Кнопка «Очистить» удаляет фигуру с клетки.</div>
-          <div class="palette" id="palette"></div>
-          <div class="two-col" style="margin-top:11px">
-            <div><label class="label" for="sideSelect">Чей ход</label><select class="select" id="sideSelect" style="width:100%"><option value="w">Белые</option><option value="b">Чёрные</option></select></div>
-            <div><label class="label" for="castleInput">Рокировка</label><input class="field" id="castleInput" value="KQkq" maxlength="4"></div>
-          </div>
-          <div class="row" style="margin-top:11px"><button type="button" class="btn" id="clearBoardBtn">Очистить доску</button><button type="button" class="btn" id="applyEditorBtn">Применить позицию</button></div>
-        </div>
-      </section>
+      <div class="internal-state" hidden aria-hidden="true">
+        <textarea class="field" id="fenInput" rows="2" spellcheck="false">rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</textarea>
+        <button type="button" id="loadFenBtn">Загрузить</button>
+        <button type="button" id="copyFenBtn">Копировать</button>
+      </div>
       <section class="panel">
         <h2 class="section-title">Stockfish 19</h2>
         <div style="margin-bottom:11px">
@@ -192,18 +261,70 @@ body{color:var(--text);background:#f4f3ee;font-family:-apple-system,BlinkMacSyst
       </section>
       
     </aside>
+    <section class="panel editor-panel" id="editorPanel">
+      <div class="editor-head">
+        <div>
+          <h2 class="section-title">Редактор доски</h2>
+          <p class="editor-description">Выберите фигуру нужного цвета, затем нажмите на клетку. Изменения сразу отображаются на доске.</p>
+        </div>
+        <div class="editor-head-actions">
+          <span class="editor-state" id="editState">Выключен</span>
+          <button type="button" class="btn" id="editBtn">Открыть редактор</button>
+        </div>
+      </div>
+      <div id="editorArea" hidden>
+        <div class="palette" id="palette"></div>
+        <div class="editor-actions">
+          <button type="button" class="btn subtle" id="clearBoardBtn">Очистить доску</button>
+          <button type="button" class="btn" id="editorUndoBtn" title="Отменить последнее изменение расстановки" disabled>Вернуть фигуру</button>
+        </div>
+      </div>
+    </section>
   </main>
 </div>
 <script>
 'use strict';
 const START_FEN='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const glyph={K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙',k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+const piecePaths={
+ p:'<path d="M50 10c-10 0-17 8-17 18 0 9 6 16 14 19l-5 21H32l-8 17h52l-8-17H58l-5-21c8-3 14-10 14-19 0-10-7-18-17-18Z"/>',
+ r:'<path d="M18 16h17v13h10V16h10v13h10V16h17v24l-7 6v26h9l8 15H8l8-15h9V46l-7-6Z"/>',
+ n:'<path d="M18 85 14 73l10-11c-2-9 1-16 8-21l1-17 14-14 10 13 12 3-5 11 12 13 4 17 8 8-5 10Z"/>',
+ b:'<path d="M50 10c-10 0-17 8-17 18 0 7 4 13 11 17l-6 22H31l-8 18h54l-8-18h-7l-6-22c7-4 11-10 11-17 0-10-7-18-17-18Z"/>',
+ q:'<path d="M18 84 25 71h10l-8-30 17 13 6-30 6 30 17-13-8 30h10l7 13Z"/><circle cx="25" cy="34" r="6"/><circle cx="50" cy="14" r="6"/><circle cx="75" cy="34" r="6"/>',
+ k:'<path d="M45 7h10v11h11v9H55v10H45V27H34v-9h11Z"/><path d="M50 39c-12 0-20 8-20 19 0 6 3 11 8 15l-5 10H25l-8 10h66l-8-10h-8l-5-10c5-4 8-9 8-15 0-11-8-19-20-19Z"/>'
+};
+const pieceDetails={
+ p:'<path d="M39 72h22M31 84h38"/>',
+ r:'<path d="M25 46h50M28 70h44M19 83h62"/>',
+ n:'<path d="M34 29 46 18 51 31M31 43c8-4 14-5 22-2"/><circle cx="54" cy="34" r="2.4" fill="CURRENT" stroke="none"/>',
+ b:'<path d="m39 23 21 23M34 67h32M25 84h50"/>',
+ q:'<path d="M29 70h42M24 83h52"/>',
+ k:'<path d="M39 59h22M34 83h32M25 94h50"/>'
+};
+function pieceSvg(ch){
+ const white=ch===ch.toUpperCase(),kind=ch.toLowerCase();
+ const fill=white?'#fffefa':'#111412',edge=white?'#171b18':'#f4eee2';
+ const stroke=white?3.4:2.1;
+ const detail=pieceDetails[kind].replace(/CURRENT/g,edge);
+ return `<svg class="piece-svg" viewBox="0 0 100 100" role="img" aria-label="${white?'Белая':'Чёрная'} фигура" xmlns="http://www.w3.org/2000/svg"><g fill="${fill}" stroke="${edge}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round">${piecePaths[kind]}<g fill="none" stroke="${edge}" stroke-width="${white?2.5:1.8}">${detail}</g></g></svg>`;
+}
+
 let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=null, engineReady=false, engineBusy=false, lastBest=null, lastPv='', pvLines={}, pendingSearch=null;
-let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated=false;
+let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated=false, editorUndoStack=[];
 let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow=null;
 let chessVisionPromise=null, chessVision=null, lastRecognition=null;
 let moveMode=false, pendingFrom=null, moveHistory=[];
 const $=id=>document.getElementById(id);
+function setTheme(theme){
+ const value=theme==='dark'?'dark':'light';
+ document.documentElement.dataset.theme=value;
+ try{localStorage.setItem('chess-study-theme',value);}catch(_){}
+ const light=$('themeLightBtn'),dark=$('themeDarkBtn');
+ light.classList.toggle('active',value==='light');dark.classList.toggle('active',value==='dark');
+ light.setAttribute('aria-pressed',String(value==='light'));dark.setAttribute('aria-pressed',String(value==='dark'));
+ const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=value==='dark'?'#171b17':'#f4f3ee';
+}
+
 function parseFEN(fen){
  const p=fen.trim().split(/\s+/); if(p.length<4) throw Error('FEN должен содержать минимум 4 поля.');
  const ranks=p[0].split('/'); if(ranks.length!==8) throw Error('В FEN должно быть 8 горизонталей.');
@@ -220,12 +341,17 @@ function toFEN(s){let rows=[];for(let r=0;r<8;r++){let row='',empty=0;for(let c=
 function squareName(r,c){return String.fromCharCode(97+c)+(8-r);}
 function drawBoard(){
  const el=$('board');el.innerHTML='';
- for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);let pc=boardState.board[r*8+c];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.textContent=glyph[pc];sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}if((!flipped&&vr===7)||(flipped&&vr===0)){let co=document.createElement('span');co.className='coord';co.style.left='auto';co.style.top='auto';co.style.right='4px';co.style.bottom='2px';co.textContent=String.fromCharCode(97+c);sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
- $('turnLabel').textContent=boardState.turn==='w'?'Ход белых':'Ход чёрных';$('fenShort').textContent=boardState.turn==='w'?'White to move':'Black to move';$('sideSelect').value=boardState.turn;$('castleInput').value=boardState.castle==='-'?'':boardState.castle;
+ for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);let pc=boardState.board[r*8+c];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.innerHTML=pieceSvg(pc);sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}if((!flipped&&vr===7)||(flipped&&vr===0)){let co=document.createElement('span');co.className='coord';co.style.left='auto';co.style.top='auto';co.style.right='4px';co.style.bottom='2px';co.textContent=String.fromCharCode(97+c);sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
+ $('turnLabel').textContent=boardState.turn==='w'?'Ход белых':'Ход чёрных';$('fenShort').textContent=boardState.turn==='w'?'White to move':'Black to move';
  clearArrow();
 }
 function boardClick(r,c){
- if(editing){boardState.board[r*8+c]=selectedPiece==='-'?null:selectedPiece;drawBoard();$('fenInput').value=toFEN(boardState);return;}
+ if(editing){
+   pushEditorSnapshot();
+   boardState.board[r*8+c]=selectedPiece==='-'?null:selectedPiece;
+   boardState.ep='-';boardState.half='0';
+   drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();return;
+  }
  if(!moveMode)return;
  const idx=r*8+c, piece=boardState.board[idx];
  if(pendingFrom===null){
@@ -296,7 +422,7 @@ function updateModeHint(){
  if(comebackSide===null){hint.textContent='При первом анализе будет выбрана сторона, которой сейчас ходить. Она начнёт с ослабленной игры (Skill Level 4); когда отставание достигнет примерно 2 пешек, программа пересчитает позицию и перейдёт на полную силу.';return;}
  hint.textContent='Сторона Comeback: '+(comebackSide==='w'?'белые':'чёрные')+'. На её ходах — ослабленная, но рассчитанная игра (Skill Level 4); на ходах соперника — полная сила. При отставании около 2 пешек включится максимальная сила.';
 }
-function setPosition(fen,preserveComeback=false){if(!preserveComeback)resetComebackState();else{activeSearch=null;pendingSearch=null;updateModeHint();}boardState=parseFEN(fen);$('fenInput').value=toFEN(boardState);drawBoard();$('pvLine').textContent='Позиция загружена. Нажми «Найти лучший ход».';$('moveResult').querySelector('strong')?.remove();$('engineDepth').textContent='Позиция готова';lastBest=null;moveHistory=[];updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';}
+function setPosition(fen,preserveComeback=false){if(!preserveComeback)resetComebackState();else{activeSearch=null;pendingSearch=null;updateModeHint();}boardState=parseFEN(fen);editorUndoStack=[];updateEditorUndoButton();$('fenInput').value=toFEN(boardState);drawBoard();$('pvLine').textContent='Позиция загружена. Нажми «Анализировать».';$('moveResult').querySelector('strong')?.remove();$('engineDepth').textContent='Позиция готова';lastBest=null;moveHistory=[];updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';}
 function clearArrow(){const a=$('bestArrow');a.setAttribute('opacity','0');lastBest=null;plannerArrow=null;drawPlannerCanvas();}
 function drawArrow(from,to){
  const a=$('bestArrow');let idx=s=>({r:8-Number(s[1]),c:s.charCodeAt(0)-97});let f=idx(from),t=idx(to);let fv=flipped?{r:7-f.r,c:7-f.c}:f,tv=flipped?{r:7-t.r,c:7-t.c}:t;
@@ -434,8 +560,54 @@ $('plannerCanvas').addEventListener('click',ev=>{
  if(!plannerImage)return;const c=$('plannerCanvas'),r=c.getBoundingClientRect(),pt={x:(ev.clientX-r.left)*c.width/r.width,y:(ev.clientY-r.top)*c.height/r.height};
  if(plannerCalibrating){plannerCorners.push(pt);if(plannerCorners.length===4){plannerCalibrating=false;$('plannerHelp').textContent='Углы доски отмечены вручную. Автораспознавание позиции запускается кнопкой «Распознать снимок ещё раз».';}drawPlannerCanvas();}
 });
-function initPalette(){const chars=['K','Q','R','B','N','P','k','q','r','b','n','p','-'];const p=$('palette');p.innerHTML='';for(const ch of chars){const b=document.createElement('button');b.type='button';b.className='piece-choice'+(ch==='-'?' empty':'')+(ch===selectedPiece?' active':'');b.textContent=ch==='-'?'Очистить':glyph[ch];b.title=ch==='-'?'Очистить клетку':ch;b.onclick=()=>{selectedPiece=ch;[...p.children].forEach(x=>x.classList.remove('active'));b.classList.add('active');};p.appendChild(b);}}
-function enableEditor(on){editing=on;if(on){moveMode=false;pendingFrom=null;$('moveModeBtn').textContent='Включить ввод ходов на доске';$('moveModeState').textContent='Режим ходов выключен';}$('editorArea').hidden=!on;$('editState').textContent=on?'Включён — нажимай на клетки':'Выключен';$('editBtn').textContent=on?'Выключить редактор':'Включить редактор';clearArrow();}
+function selectEditorPiece(ch){
+ selectedPiece=ch;
+ document.querySelectorAll('.piece-choice').forEach(btn=>btn.classList.toggle('active',btn.dataset.piece===ch));
+}
+function initPalette(){
+ const p=$('palette');p.innerHTML='';
+ const groups=[
+  {label:'Белые фигуры',style:'white-group',pieces:['K','Q','R','B','N','P']},
+  {label:'Чёрные фигуры',style:'black-group',pieces:['k','q','r','b','n','p']}
+ ];
+ const names={K:'Белый король',Q:'Белый ферзь',R:'Белая ладья',B:'Белый слон',N:'Белый конь',P:'Белая пешка',k:'Чёрный король',q:'Чёрный ферзь',r:'Чёрная ладья',b:'Чёрный слон',n:'Чёрный конь',p:'Чёрная пешка'};
+ for(const groupData of groups){
+  const group=document.createElement('div');group.className='palette-group '+groupData.style;
+  const title=document.createElement('div');title.className='palette-group-title';title.textContent=groupData.label;group.appendChild(title);
+  const row=document.createElement('div');row.className='palette-row';
+  for(const ch of groupData.pieces){
+   const btn=document.createElement('button');btn.type='button';btn.className='piece-choice';btn.dataset.piece=ch;
+   btn.innerHTML=pieceSvg(ch);btn.title=names[ch];btn.setAttribute('aria-label',names[ch]);
+   btn.onclick=()=>selectEditorPiece(ch);row.appendChild(btn);
+  }
+  group.appendChild(row);p.appendChild(group);
+ }
+ const tools=document.createElement('div');tools.className='palette-tools';
+ const empty=document.createElement('button');empty.type='button';empty.className='piece-choice empty';empty.dataset.piece='-';
+ empty.innerHTML='<span class="empty-icon">×</span><span>Пустая клетка</span>';empty.title='Убрать фигуру с выбранной клетки';
+ empty.onclick=()=>selectEditorPiece('-');tools.appendChild(empty);p.appendChild(tools);
+ selectEditorPiece(selectedPiece);
+}
+function updateEditorUndoButton(){const button=$('editorUndoBtn');if(button)button.disabled=editorUndoStack.length===0;}
+function pushEditorSnapshot(){
+ if(!boardState)return;
+ editorUndoStack.push(boardState.board.slice());
+ if(editorUndoStack.length>80)editorUndoStack.shift();
+ updateEditorUndoButton();
+}
+function undoEditorAction(){
+ if(!editorUndoStack.length)return;
+ boardState.board=editorUndoStack.pop();boardState.ep='-';$('fenInput').value=toFEN(boardState);
+ drawBoard();updateEditorUndoButton();setStatus('Последнее изменение расстановки отменено.','ok');
+}
+function enableEditor(on){
+ editing=on;
+ if(on){moveMode=false;pendingFrom=null;$('moveModeBtn').textContent='Ходы на доске';$('moveModeState').textContent='Выключен';}
+ $('editorArea').hidden=!on;
+ $('editState').textContent=on?'Редактор включён':'Выключен';
+ $('editBtn').textContent=on?'Закрыть редактор':'Открыть редактор';
+ updateEditorUndoButton();clearArrow();
+}
 function moveToFen(sq){const from=sq.slice(0,2);return from;}
 function ensureEngine(){
  if(engineReady)return Promise.resolve();
@@ -545,7 +717,7 @@ function handleBest(line){
 }
 async function analyze(){
  try{
-  if(editing){setStatus('Сначала нажми «Применить позицию» в редакторе.','error');return;}
+  if(editing)enableEditor(false);
   boardState=parseFEN($('fenInput').value);$('fenInput').value=toFEN(boardState);drawBoard();
   if(playMode==='comeback'&&comebackSide===null)comebackSide=boardState.turn;
   const comebackTrial=playMode==='comeback'&&!comebackActivated&&boardState.turn===comebackSide;
@@ -564,14 +736,17 @@ async function analyze(){
   updateModeHint();
  }catch(e){if(engine&&!engineReady){try{engine.terminate();}catch(_){}engine=null;}setStatus(e.message||'Ошибка анализа.','error');engineBusy=false;$('analyzeBtn').disabled=false;$('stopBtn').disabled=true;$('playModeSelect').disabled=false;}
 }
-$('loadFenBtn').onclick=()=>{try{enableEditor(false);setPosition($('fenInput').value,true);setStatus('FEN успешно загружен.','ok');}catch(e){setStatus(e.message,'error');}};
-$('copyFenBtn').onclick=async()=>{try{const fen=toFEN(boardState);await navigator.clipboard.writeText(fen);setStatus('FEN скопирован в буфер обмена.','ok');}catch(e){$('fenInput').select();document.execCommand('copy');setStatus('FEN выделен/скопирован.','ok');}};
+$('loadFenBtn').onclick=()=>{try{enableEditor(false);setPosition($('fenInput').value,true);setStatus('Позиция загружена.','ok');}catch(e){setStatus(e.message,'error');}};
+$('copyFenBtn').onclick=async()=>{try{const fen=toFEN(boardState);await navigator.clipboard.writeText(fen);setStatus('Код позиции скопирован.','ok');}catch(e){$('fenInput').select();document.execCommand('copy');setStatus('Код позиции выделен.','ok');}};
 $('startBtn').onclick=()=>{enableEditor(false);setPosition(START_FEN);setStatus('Установлена начальная позиция.','ok');};
 $('flipBtn').onclick=()=>{const previous=lastBest;flipped=!flipped;drawBoard();if(previous)drawArrow(previous.from,previous.to);};
 $('editBtn').onclick=()=>enableEditor(!editing);
-$('clearBoardBtn').onclick=()=>{boardState.board=Array(64).fill(null);drawBoard();$('fenInput').value=toFEN(boardState);};
-$('applyEditorBtn').onclick=()=>{try{boardState.turn=$('sideSelect').value;const ca=$('castleInput').value.trim();boardState.castle=ca||'-';if(!/^(-|K?Q?k?q?)$/.test(boardState.castle))throw Error('Права рокировки должны содержать только KQkq или быть пустыми.');boardState.ep='-';boardState.half='0';boardState.full='1';const fen=toFEN(boardState);parseFEN(fen);enableEditor(false);setPosition(fen);setStatus('Позиция из редактора применена.','ok');}catch(e){setStatus(e.message,'error');}};
-$('sideSelect').onchange=()=>{if(boardState)boardState.turn=$('sideSelect').value;};
+$('themeLightBtn').onclick=()=>setTheme('light');
+$('themeDarkBtn').onclick=()=>setTheme('dark');
+$('clearBoardBtn').onclick=()=>{
+ if(boardState.board.some(Boolean)){pushEditorSnapshot();boardState.board=Array(64).fill(null);boardState.ep='-';boardState.half='0';drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();}
+};
+$('editorUndoBtn').onclick=undoEditorAction;
 $('analyzeBtn').onclick=analyze;
 $('playModeSelect').addEventListener('change',()=>{if(engineBusy)return;playMode=$('playModeSelect').value;resetComebackState();$('playBestBtn').textContent='Применить лучший ход к доске';setStatus(playMode==='comeback'?'Выбран Comeback. Сторона определится по цвету хода при первом анализе.':'Выбран Standard — обычный режим без ослабления.','ok');});
 $('stopBtn').onclick=()=>{if(engine&&engineBusy){pendingSearch=null;activeSearch=null;engine.postMessage('stop');setStatus('Останавливаю анализ…','loading');}};
@@ -581,7 +756,7 @@ $('moveInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('applyMoveBtn
 $('playBestBtn').onclick=()=>{try{const uci=$('playBestBtn').dataset.uci||'';if(!uci)throw Error('Сначала найди лучший ход.');applyMoveText(uci);}catch(e){setStatus(e.message,'error');}};
 $('undoMoveBtn').onclick=undoLastMove;
 $('copyImageFenBtn').onclick=recognizePlannerPosition;
-initPalette();boardState=parseFEN(START_FEN);drawBoard();updateModeHint();
+initPalette();boardState=parseFEN(START_FEN);drawBoard();updateEditorUndoButton();let savedTheme='light';try{savedTheme=localStorage.getItem('chess-study-theme')||'light';}catch(_){}setTheme(savedTheme);updateModeHint();
 window.addEventListener('resize',()=>{if(lastBest)drawArrow(lastBest.from,lastBest.to);});
 // Installable Safari/PWA shell. The app requires HTTPS for service workers.
 if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
