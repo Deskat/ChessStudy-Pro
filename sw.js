@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-study-pro-iphone-v14';
+const CACHE_NAME = 'chess-study-pro-iphone-v15';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './pieces/cburnett/wK.svg', './pieces/cburnett/wQ.svg', './pieces/cburnett/wR.svg', './pieces/cburnett/wB.svg', './pieces/cburnett/wN.svg', './pieces/cburnett/wP.svg', './pieces/cburnett/bK.svg', './pieces/cburnett/bQ.svg', './pieces/cburnett/bR.svg', './pieces/cburnett/bB.svg', './pieces/cburnett/bN.svg', './pieces/cburnett/bP.svg', './pieces/cburnett-v2/wK.svg', './pieces/cburnett-v2/wQ.svg', './pieces/cburnett-v2/wR.svg', './pieces/cburnett-v2/wB.svg', './pieces/cburnett-v2/wN.svg', './pieces/cburnett-v2/wP.svg', './pieces/cburnett-v2/bK.svg', './pieces/cburnett-v2/bQ.svg', './pieces/cburnett-v2/bR.svg', './pieces/cburnett-v2/bB.svg', './pieces/cburnett-v2/bN.svg', './pieces/cburnett-v2/bP.svg'];
 
 self.addEventListener('install', event => {
