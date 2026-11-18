@@ -183,8 +183,6 @@ html[data-theme="dark"] .piece-image{filter:none}
 .piece-set-control{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 11px;border:1px solid #e2e7df;border-radius:999px;background:#eef1eb;min-width:0}
 .piece-set-label{font-size:12px;font-weight:650;color:#647064;white-space:nowrap}
 .piece-set-select{max-width:130px;min-width:110px;border:0;border-radius:999px;background:#fffefa;color:#3f5844;padding:8px 10px;font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;outline:none}
-.piece-sprite{display:block;width:100%;height:100%;background-repeat:no-repeat;background-size:1200% 100%;background-position:var(--piece-position,0%) center;pointer-events:none;user-select:none}
-.piece-sprite-v2{background-image:url("./pieces/cburnett-v2/CBurnettV2_100.png")}
 html[data-theme="dark"] .piece-set-control{background:#252d24;border-color:#3a4538}
 html[data-theme="dark"] .piece-set-label{color:#c2cdbd}
 html[data-theme="dark"] .piece-set-select{background:#3a4838;color:#f2f6ed}
@@ -206,7 +204,7 @@ html[data-theme="dark"] .piece-set-select{background:#3a4838;color:#f2f6ed}
 html[data-theme="dark"] .files-coords{color:#d5b58c}
 /* One centered size for all pieces and both piece sets. */
 .piece{width:84%;height:84%;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;line-height:1;font-size:0;text-shadow:none}
-.piece-image,.piece-sprite{width:100%;height:100%;object-fit:contain}
+.piece-image{width:100%;height:100%;object-fit:contain}
 /* End-of-game labels inspired by the supplied checkmate reference. */
 .game-end-overlay{position:absolute;inset:0;z-index:8;pointer-events:none}
 .game-end-overlay[hidden]{display:none}
