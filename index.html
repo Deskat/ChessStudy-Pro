@@ -864,7 +864,7 @@ function undoEditorAction(){
 }
 function enableEditor(on){
  editing=on;
- if(on)pendingFrom=null;
+ if(on){pendingFrom=null;gameEnded=false;const overlay=$('gameEndOverlay');if(overlay)overlay.hidden=true;}
  $('editorArea').hidden=!on;
  $('editState').textContent=on?'Редактор включён':'Выключен';
  $('editBtn').textContent=on?'Закрыть редактор':'Открыть редактор';
