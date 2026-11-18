@@ -500,6 +500,7 @@ function drawBoard(){
  if(files){files.innerHTML='';for(let vc=0;vc<8;vc++){const c=flipped?7-vc:vc;const label=document.createElement('span');label.textContent=String.fromCharCode(97+c);files.appendChild(label);}}
  $('turnLabel').textContent=boardState.turn==='w'?'Ход белых':'Ход чёрных';$('fenShort').textContent=boardState.turn==='w'?'White to move':'Black to move';
  clearArrow();
+ if(gameEnded)updateGameEndState();
 }
 function getLegalDestinations(from){
  const piece=boardState.board[from];if(!piece)return [];
