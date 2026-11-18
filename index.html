@@ -135,7 +135,7 @@ html[data-theme="dark"] .board-wrap{border-color:#685842;box-shadow:0 5px 18px r
 .sq.light .coord{color:#805f42}
 .sq.dark .coord{color:#fff4df}
 .piece{display:flex;align-items:center;justify-content:center;width:91%;height:91%;font-size:0;line-height:1;text-shadow:none}
-.piece-svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 0 rgba(0,0,0,.12))}
+.piece-image{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;filter:drop-shadow(0 1px 0 rgba(0,0,0,.08))}
 .editor-panel{grid-column:1/-1;margin-top:0}
 .editor-head{display:flex;align-items:center;justify-content:space-between;gap:18px}
 .editor-head .section-title{margin-bottom:5px}
@@ -175,6 +175,10 @@ html[data-theme="dark"] .palette-group.black-group .piece-choice.active{backgrou
  .board-tools .btn{font-size:11px;padding:7px 8px}
 }
 
+.move-history-actions{display:flex;gap:9px;flex-wrap:wrap}
+.move-history-actions .btn{min-width:130px;flex:0 1 auto}
+html[data-theme="dark"] .piece-image{filter:none}
+@media(max-width:420px){.move-history-actions .btn{flex:1;min-width:0}}
 </style>
 </head>
 <body>
@@ -199,12 +203,11 @@ html[data-theme="dark"] .palette-group.black-group .piece-choice.active{backgrou
         <button type="button" class="btn" id="moveModeBtn">Ходы на доске</button>
         <span class="muted small" id="moveModeState">Выключен</span>
       </div>
-      <div class="row" style="margin-top:9px">
-        <input class="field" id="moveInput" style="flex:1;min-width:140px" placeholder="Ход, например e2e4 или e7e8q" maxlength="5" spellcheck="false">
-        <button type="button" class="btn" id="applyMoveBtn">Применить ход</button>
-        <button type="button" class="btn subtle" id="undoMoveBtn" disabled>Отменить</button>
+      <div class="row move-history-actions" style="margin-top:9px">
+        <button type="button" class="btn subtle" id="undoMoveBtn" disabled>↶ Отменить ход</button>
+        <button type="button" class="btn" id="redoMoveBtn" disabled>↷ Вернуть ход</button>
       </div>
-      <div class="hint">Можно вводить ходы обеих сторон по очереди или выбрать фигуру и клетку назначения на доске. После каждого хода очередь переключается автоматически. Сверяй легальность ходов с партией: это ручное обновление позиции, а не полноценная проверка правил.</div>
+      <div class="hint">Выбери фигуру и клетку назначения на доске. Кнопки ниже позволяют отменять и возвращать ходы по очереди.</div>
       <div class="move-result" id="moveResult"><div class="muted small">Лучший ход</div><div class="pv" id="pvLine">Здесь появятся лучший ход и варианты.</div>
         <div class="row" style="margin-top:10px"><button type="button" class="btn primary" id="playBestBtn" disabled>Сделать ход</button></div>
       </div>
@@ -287,35 +290,19 @@ html[data-theme="dark"] .palette-group.black-group .piece-choice.active{backgrou
 <script>
 'use strict';
 const START_FEN='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const piecePaths={
- p:'<path d="M50 10c-10 0-17 8-17 18 0 9 6 16 14 19l-5 21H32l-8 17h52l-8-17H58l-5-21c8-3 14-10 14-19 0-10-7-18-17-18Z"/>',
- r:'<path d="M18 16h17v13h10V16h10v13h10V16h17v24l-7 6v26h9l8 15H8l8-15h9V46l-7-6Z"/>',
- n:'<path d="M18 85 14 73l10-11c-2-9 1-16 8-21l1-17 14-14 10 13 12 3-5 11 12 13 4 17 8 8-5 10Z"/>',
- b:'<path d="M50 10c-10 0-17 8-17 18 0 7 4 13 11 17l-6 22H31l-8 18h54l-8-18h-7l-6-22c7-4 11-10 11-17 0-10-7-18-17-18Z"/>',
- q:'<path d="M18 84 25 71h10l-8-30 17 13 6-30 6 30 17-13-8 30h10l7 13Z"/><circle cx="25" cy="34" r="6"/><circle cx="50" cy="14" r="6"/><circle cx="75" cy="34" r="6"/>',
- k:'<path d="M45 7h10v11h11v9H55v10H45V27H34v-9h11Z"/><path d="M50 39c-12 0-20 8-20 19 0 6 3 11 8 15l-5 10H25l-8 10h66l-8-10h-8l-5-10c5-4 8-9 8-15 0-11-8-19-20-19Z"/>'
-};
-const pieceDetails={
- p:'<path d="M39 72h22M31 84h38"/>',
- r:'<path d="M25 46h50M28 70h44M19 83h62"/>',
- n:'<path d="M34 29 46 18 51 31M31 43c8-4 14-5 22-2"/><circle cx="54" cy="34" r="2.4" fill="CURRENT" stroke="none"/>',
- b:'<path d="m39 23 21 23M34 67h32M25 84h50"/>',
- q:'<path d="M29 70h42M24 83h52"/>',
- k:'<path d="M39 59h22M34 83h32M25 94h50"/>'
-};
-function pieceSvg(ch){
- const white=ch===ch.toUpperCase(),kind=ch.toLowerCase();
- const fill=white?'#fffefa':'#111412',edge=white?'#171b18':'#f4eee2';
- const stroke=white?3.4:2.1;
- const detail=pieceDetails[kind].replace(/CURRENT/g,edge);
- return `<svg class="piece-svg" viewBox="0 0 100 100" role="img" aria-label="${white?'Белая':'Чёрная'} фигура" xmlns="http://www.w3.org/2000/svg"><g fill="${fill}" stroke="${edge}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round">${piecePaths[kind]}<g fill="none" stroke="${edge}" stroke-width="${white?2.5:1.8}">${detail}</g></g></svg>`;
+function pieceImageMarkup(ch){
+ const white=ch===ch.toUpperCase();
+ const color=white?'w':'b';
+ const kind=ch.toUpperCase();
+ const name={K:'король',Q:'ферзь',R:'ладья',B:'слон',N:'конь',P:'пешка'}[kind];
+ return '<img class="piece-image" src="./pieces/cburnett/'+color+kind+'.svg" alt="'+(white?'Белый':'Чёрный')+' '+name+'" draggable="false">';
 }
 
 let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=null, engineReady=false, engineBusy=false, lastBest=null, lastPv='', pvLines={}, pendingSearch=null;
 let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated=false, editorUndoStack=[];
 let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow=null;
 let chessVisionPromise=null, chessVision=null, lastRecognition=null;
-let moveMode=false, pendingFrom=null, moveHistory=[];
+let moveMode=false, pendingFrom=null, moveHistory=[], redoHistory=[];
 const $=id=>document.getElementById(id);
 function setTheme(theme){
  const value=theme==='dark'?'dark':'light';
@@ -343,7 +330,7 @@ function toFEN(s){let rows=[];for(let r=0;r<8;r++){let row='',empty=0;for(let c=
 function squareName(r,c){return String.fromCharCode(97+c)+(8-r);}
 function drawBoard(){
  const el=$('board');el.innerHTML='';
- for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);let pc=boardState.board[r*8+c];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.innerHTML=pieceSvg(pc);sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}if((!flipped&&vr===7)||(flipped&&vr===0)){let co=document.createElement('span');co.className='coord';co.style.left='auto';co.style.top='auto';co.style.right='4px';co.style.bottom='2px';co.textContent=String.fromCharCode(97+c);sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
+ for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);let pc=boardState.board[r*8+c];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.innerHTML=pieceImageMarkup(pc);sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}if((!flipped&&vr===7)||(flipped&&vr===0)){let co=document.createElement('span');co.className='coord';co.style.left='auto';co.style.top='auto';co.style.right='4px';co.style.bottom='2px';co.textContent=String.fromCharCode(97+c);sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
  $('turnLabel').textContent=boardState.turn==='w'?'Ход белых':'Ход чёрных';$('fenShort').textContent=boardState.turn==='w'?'White to move':'Black to move';
  clearArrow();
 }
@@ -352,6 +339,7 @@ function boardClick(r,c){
    pushEditorSnapshot();
    boardState.board[r*8+c]=selectedPiece==='-'?null:selectedPiece;
    boardState.ep='-';boardState.half='0';
+   moveHistory=[];redoHistory=[];updateMoveHistory();
    drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();return;
   }
  if(!moveMode)return;
@@ -409,12 +397,44 @@ function applyBoardMove(from,to,promo=''){
  if(color==='b')boardState.full=String(Number(boardState.full||1)+1);
  boardState.turn=color==='w'?'b':'w';
  const uci=fromSq+toSq+(pawn&&((color==='w'&&Math.floor(to/8)===0)||(color==='b'&&Math.floor(to/8)===7))?(promo||'q').toLowerCase():'');
- moveHistory.push({uci,fenBefore});$('moveInput').value='';$('fenInput').value=toFEN(boardState);lastBest=null;pendingFrom=null;clearArrow();drawBoard();updateMoveHistory();$('playBestBtn').disabled=true;setStatus('Ход '+uci+' записан. Теперь ход '+(boardState.turn==='w'?'белых':'чёрных')+'.','ok');
+ redoHistory=[];moveHistory.push({uci,fenBefore,fenAfter:toFEN(boardState)});$('fenInput').value=toFEN(boardState);lastBest=null;pendingFrom=null;clearArrow();drawBoard();updateMoveHistory();$('playBestBtn').disabled=true;setStatus('Ход '+uci+' записан. Теперь ход '+(boardState.turn==='w'?'белых':'чёрных')+'.','ok');
 }
 function applyMoveText(text){const m=text.trim().toLowerCase().match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);if(!m)throw Error('Введи ход в формате e2e4 или e7e8q.');const sq=m[1]+m[2];const index=s=>((8-Number(s[1]))*8)+(s.charCodeAt(0)-97);applyBoardMove(index(m[1]),index(m[2]),m[3]||'');}
-function updateMoveHistory(){ $('moveHistory').textContent=moveHistory.length?moveHistory.map((m,i)=>`${Math.floor(i/2)+1}${i%2===0?'.':'...'} ${m.uci}`).join('  '):'Пока ходов нет.';$('undoMoveBtn').disabled=moveHistory.length===0;}
-function undoLastMove(){if(!moveHistory.length)return;const last=moveHistory.pop();try{resetComebackState();boardState=parseFEN(last.fenBefore);$('fenInput').value=toFEN(boardState);pendingFrom=null;lastBest=null;clearArrow();drawBoard();updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';setStatus('Последний ход отменён. Прогресс Comeback сброшен.','ok');}catch(e){setStatus('Не удалось отменить ход: '+e.message,'error');}}
-
+function updateMoveHistory(){
+ $('moveHistory').textContent=moveHistory.length?moveHistory.map((m,i)=>`${Math.floor(i/2)+1}${i%2===0?'.':'...'} ${m.uci}`).join('  '):'Пока ходов нет.';
+ $('undoMoveBtn').disabled=moveHistory.length===0;
+ $('redoMoveBtn').disabled=redoHistory.length===0;
+}
+function undoLastMove(){
+ if(!moveHistory.length)return;
+ const last=moveHistory.pop();
+ try{
+  redoHistory.push(last);
+  resetComebackState();
+  boardState=parseFEN(last.fenBefore);
+  $('fenInput').value=toFEN(boardState);pendingFrom=null;lastBest=null;clearArrow();drawBoard();
+  updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
+  setStatus('Ход отменён. Нажми «Вернуть ход», чтобы восстановить его.','ok');
+ }catch(e){
+  moveHistory.push(last);redoHistory.pop();updateMoveHistory();
+  setStatus('Не удалось отменить ход: '+e.message,'error');
+ }
+}
+function redoLastMove(){
+ if(!redoHistory.length)return;
+ const next=redoHistory.pop();
+ try{
+  resetComebackState();
+  boardState=parseFEN(next.fenAfter);
+  moveHistory.push(next);
+  $('fenInput').value=toFEN(boardState);pendingFrom=null;lastBest=null;clearArrow();drawBoard();
+  updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
+  setStatus('Отменённый ход восстановлен.','ok');
+ }catch(e){
+  redoHistory.push(next);updateMoveHistory();
+  setStatus('Не удалось вернуть ход: '+e.message,'error');
+ }
+}
 function setStatus(msg,type=''){const s=$('status');s.textContent=msg;s.className='status'+(type?' '+type:'');}
 function resetComebackState(){comebackSide=null;comebackActivated=false;activeSearch=null;pendingSearch=null;updateModeHint();}
 function updateModeHint(){
@@ -424,7 +444,7 @@ function updateModeHint(){
  if(comebackSide===null){hint.textContent='При первом анализе будет выбрана сторона, которой сейчас ходить. Она начнёт с ослабленной игры (Skill Level 4); когда отставание достигнет примерно 2 пешек, программа пересчитает позицию и перейдёт на полную силу.';return;}
  hint.textContent='Сторона Comeback: '+(comebackSide==='w'?'белые':'чёрные')+'. На её ходах — ослабленная, но рассчитанная игра (Skill Level 4); на ходах соперника — полная сила. При отставании около 2 пешек включится максимальная сила.';
 }
-function setPosition(fen,preserveComeback=false){if(!preserveComeback)resetComebackState();else{activeSearch=null;pendingSearch=null;updateModeHint();}boardState=parseFEN(fen);editorUndoStack=[];updateEditorUndoButton();$('fenInput').value=toFEN(boardState);drawBoard();$('pvLine').textContent='Позиция загружена. Нажми «Анализировать».';$('moveResult').querySelector('strong')?.remove();$('engineDepth').textContent='Позиция готова';lastBest=null;moveHistory=[];updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';}
+function setPosition(fen,preserveComeback=false){if(!preserveComeback)resetComebackState();else{activeSearch=null;pendingSearch=null;updateModeHint();}boardState=parseFEN(fen);editorUndoStack=[];updateEditorUndoButton();$('fenInput').value=toFEN(boardState);drawBoard();$('pvLine').textContent='Позиция загружена. Нажми «Анализировать».';$('moveResult').querySelector('strong')?.remove();$('engineDepth').textContent='Позиция готова';lastBest=null;moveHistory=[];redoHistory=[];updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';}
 function clearArrow(){const a=$('bestArrow');a.setAttribute('opacity','0');lastBest=null;plannerArrow=null;drawPlannerCanvas();}
 function drawArrow(from,to){
  const a=$('bestArrow');let idx=s=>({r:8-Number(s[1]),c:s.charCodeAt(0)-97});let f=idx(from),t=idx(to);let fv=flipped?{r:7-f.r,c:7-f.c}:f,tv=flipped?{r:7-t.r,c:7-t.c}:t;
@@ -579,7 +599,7 @@ function initPalette(){
   const row=document.createElement('div');row.className='palette-row';
   for(const ch of groupData.pieces){
    const btn=document.createElement('button');btn.type='button';btn.className='piece-choice';btn.dataset.piece=ch;
-   btn.innerHTML=pieceSvg(ch);btn.title=names[ch];btn.setAttribute('aria-label',names[ch]);
+   btn.innerHTML=pieceImageMarkup(ch);btn.title=names[ch];btn.setAttribute('aria-label',names[ch]);
    btn.onclick=()=>selectEditorPiece(ch);row.appendChild(btn);
   }
   group.appendChild(row);p.appendChild(group);
@@ -746,17 +766,16 @@ $('editBtn').onclick=()=>enableEditor(!editing);
 $('themeLightBtn').onclick=()=>setTheme('light');
 $('themeDarkBtn').onclick=()=>setTheme('dark');
 $('clearBoardBtn').onclick=()=>{
- if(boardState.board.some(Boolean)){pushEditorSnapshot();boardState.board=Array(64).fill(null);boardState.ep='-';boardState.half='0';drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();}
+ if(boardState.board.some(Boolean)){pushEditorSnapshot();boardState.board=Array(64).fill(null);boardState.ep='-';boardState.half='0';moveHistory=[];redoHistory=[];updateMoveHistory();drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();}
 };
 $('editorUndoBtn').onclick=undoEditorAction;
 $('analyzeBtn').onclick=analyze;
 $('playModeSelect').addEventListener('change',()=>{if(engineBusy)return;playMode=$('playModeSelect').value;resetComebackState();$('playBestBtn').textContent='Применить лучший ход к доске';setStatus(playMode==='comeback'?'Выбран Comeback. Сторона определится по цвету хода при первом анализе.':'Выбран Standard — обычный режим без ослабления.','ok');});
 $('stopBtn').onclick=()=>{if(engine&&engineBusy){pendingSearch=null;activeSearch=null;engine.postMessage('stop');setStatus('Останавливаю анализ…','loading');}};
 $('moveModeBtn').onclick=()=>{if(editing)enableEditor(false);moveMode=!moveMode;pendingFrom=null;$('moveModeBtn').textContent=moveMode?'Выключить ходы':'Включить ввод ходов на доске';$('moveModeState').textContent=moveMode?'Режим ходов включён — выбери фигуру и клетку':'Режим ходов выключен';$('moveModeState').style.color=moveMode?'#aee2c4':'';drawBoard();};
-$('applyMoveBtn').onclick=()=>{try{applyMoveText($('moveInput').value);}catch(e){setStatus(e.message,'error');}};
-$('moveInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('applyMoveBtn').click();});
 $('playBestBtn').onclick=()=>{try{const uci=$('playBestBtn').dataset.uci||'';if(!uci)throw Error('Сначала найди лучший ход.');applyMoveText(uci);}catch(e){setStatus(e.message,'error');}};
 $('undoMoveBtn').onclick=undoLastMove;
+$('redoMoveBtn').onclick=redoLastMove;
 $('copyImageFenBtn').onclick=recognizePlannerPosition;
 initPalette();boardState=parseFEN(START_FEN);drawBoard();updateEditorUndoButton();let savedTheme='light';try{savedTheme=localStorage.getItem('chess-study-theme')||'light';}catch(_){}setTheme(savedTheme);updateModeHint();
 window.addEventListener('resize',()=>{if(lastBest)drawArrow(lastBest.from,lastBest.to);});
