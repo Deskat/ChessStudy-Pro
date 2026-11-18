@@ -20,3 +20,8 @@ The 12 SVG files in `pieces/cburnett-v2/` are the aligned individual-piece versi
 - Author: JohnPablok
 - License: Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0)
 - The set is included as a separate optional theme and is not an official Lichess set.
+
+
+### Cburnett V2 individual SVG files
+
+The individually loaded SVG files in `pieces/cburnett-v2/` are based on JohnPablok's improved Cburnett set. The copied square-viewBox version is available in the source mirror at https://github.com/zhengzhiyu0/chess/tree/main/web/public/pieces/cburnett-v2. Original attribution and license: JohnPablok, CC BY-SA 3.0, https://opengameart.org/content/chess-pieces-and-board-squares.
