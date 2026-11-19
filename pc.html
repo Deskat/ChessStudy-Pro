@@ -457,7 +457,7 @@ let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=nul
 let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated=false, editorUndoStack=[];
 let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow=null;
 let chessVisionPromise=null, chessVision=null, lastRecognition=null;
-let pendingFrom=null, pendingLegalMoves=[], moveHistory=[], redoHistory=[], gameEnded=false;
+let pendingFrom=null, pendingLegalMoves=[], moveHistory=[], redoHistory=[], gameEnded=false, promotionPending=null;
 const $=id=>document.getElementById(id);
 
 function setTheme(theme){
@@ -472,7 +472,7 @@ function setTheme(theme){
 
 function parseFEN(fen){
  if(typeof fen!=='string')throw Error('Позиция FEN должна быть текстом.');
- const p=fen.trim().split(/\\s+/);
+ const p=fen.trim().split(/\s+/);
  if(p.length<4||p.length>6)throw Error('FEN должен содержать от 4 до 6 полей.');
  const ranks=p[0].split('/');if(ranks.length!==8)throw Error('В FEN должно быть 8 горизонталей.');
  const b=Array(64).fill(null);
@@ -490,8 +490,8 @@ function parseFEN(fen){
  if(p[2]!=='-'&&!/^K?Q?k?q?$/.test(p[2]))throw Error('Некорректные права рокировки.');
  if(p[3]!=='-'&&!/^[a-h][36]$/.test(p[3]))throw Error('Некорректное поле взятия на проходе.');
  const half=p[4]===undefined?'0':p[4],full=p[5]===undefined?'1':p[5];
- if(!/^\\d+$/.test(half)||!Number.isSafeInteger(Number(half)))throw Error('Счётчик полуходов в FEN должен быть неотрицательным целым числом.');
- if(!/^[1-9]\\d*$/.test(full)||!Number.isSafeInteger(Number(full)))throw Error('Номер полного хода в FEN должен быть положительным целым числом.');
+ if(!/^\d+$/.test(half)||!Number.isSafeInteger(Number(half)))throw Error('Счётчик полуходов в FEN должен быть неотрицательным целым числом.');
+ if(!/^[1-9]\d*$/.test(full)||!Number.isSafeInteger(Number(full)))throw Error('Номер полного хода в FEN должен быть положительным целым числом.');
  const wk=b.filter(x=>x==='K').length,bk=b.filter(x=>x==='k').length;
  if(wk!==1||bk!==1)throw Error('Для анализа на доске должны быть ровно два короля — по одному каждого цвета.');
  if(p[2]!=='-'){
@@ -689,7 +689,7 @@ function legalMoveLeavesKingSafe(board,from,to,side,ep,castle){
  if(enPassantCapture)next[fr*8+tc]=null;
  if(castleSide){
   if(castleSide==='king'){next[fr*8+5]=next[fr*8+7];next[fr*8+7]=null;}
-  else{next[fr*8+3]=next[fr*8];next[fr*8]=null;}
+  else{next[fr*8+3]=next[fr*8+0];next[fr*8+0]=null;}
  }
  if(kind==='p'&&(tr===0||tr===7))next[to]=side==='w'?'Q':'q';
  return !kingIsInCheck(next,side);
@@ -1065,11 +1065,11 @@ function renderPvLines(){
  const numbers=Object.keys(pvLines).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
  if(!numbers.length){output.textContent='Stockfish анализирует позицию…';return;}
  output.textContent=numbers.map(n=>{
-  const item=pvLines[n],moves=String(item.pv||'').trim().split(/\\s+/).filter(Boolean);
+  const item=pvLines[n],moves=String(item.pv||'').trim().split(/\s+/).filter(Boolean);
   const shown=moves.slice(0,18).join(' ');
   const suffix=moves.length>18?' …':'';
   return 'Вариант '+n+(item.score?' ('+item.score+')':'')+': '+shown+suffix;
- }).join('\\n');
+ }).join('\n');
 }
 function handleInfo(line){
  if(!activeSearch)return;
