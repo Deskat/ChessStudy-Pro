@@ -12,8 +12,8 @@
       {
         "label": "main",
         "title": "ChessStudy Pro — Windows",
-        "width": 1600,
-        "height": 1100,
+        "width": 1440,
+        "height": 960,
         "minWidth": 1100,
         "minHeight": 760,
         "resizable": true,
