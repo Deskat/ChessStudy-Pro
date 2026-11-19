@@ -27,7 +27,7 @@ for (const folder of ['pieces', 'recognition', 'icons']) {
 }
 fs.copyFileSync(path.join(root, 'manifest.webmanifest'), path.join(out, 'manifest.webmanifest'));
 
-let html = fs.readFileSync(path.join(root, 'pc.html'), 'utf8');
+let html = fs.readFileSync(path.join(root, 'pc.html'), 'utf8').replace(/\r\n/g, '\n');
 
 html = replaceExactly(html,
   '<div><label class="label" for="threadsSelect">Потоки CPU</label><select class="select" id="threadsSelect" style="width:100%" disabled><option value="1" selected>1 поток (веб-сборка)</option></select></div>',
