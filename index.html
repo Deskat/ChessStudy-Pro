@@ -258,6 +258,35 @@ html[data-theme="dark"] .sq.legal-capture::after{
  background:rgba(207,213,204,.46);box-shadow:0 0 0 1px rgba(20,30,20,.18)
 }
 
+/* Additional restrained board palettes */
+html[data-board-theme="green"] .sq.light{background:#eeeed2;color:#33412f}
+html[data-board-theme="green"] .sq.dark{background:#769656;color:#172417}
+html[data-board-theme="green"] .sq.light .coord{color:#72805c}
+html[data-board-theme="green"] .sq.dark .coord{color:#f4f5df}
+html[data-board-theme="blue"] .sq.light{background:#e7edf4;color:#263b50}
+html[data-board-theme="blue"] .sq.dark{background:#7896b5;color:#172c42}
+html[data-board-theme="blue"] .sq.light .coord{color:#627b94}
+html[data-board-theme="blue"] .sq.dark .coord{color:#f1f6fb}
+html[data-board-theme="purple"] .sq.light{background:#eee8f2;color:#403449}
+html[data-board-theme="purple"] .sq.dark{background:#a58eae;color:#30243a}
+html[data-board-theme="purple"] .sq.light .coord{color:#897895}
+html[data-board-theme="purple"] .sq.dark .coord{color:#fff7ff}
+html[data-board-theme="slate"] .sq.light{background:#d9dddf;color:#30383d}
+html[data-board-theme="slate"] .sq.dark{background:#78858d;color:#1c252b}
+html[data-board-theme="slate"] .sq.light .coord{color:#69757b}
+html[data-board-theme="slate"] .sq.dark .coord{color:#f2f5f6}
+.piece-enter{animation:chess-piece-move .22s cubic-bezier(.2,.75,.25,1) both}
+@keyframes chess-piece-move{from{transform:translate(var(--move-x),var(--move-y));opacity:.45}to{transform:translate(0,0);opacity:1}}
+@media(prefers-reduced-motion:reduce){.piece-enter{animation:none}}
+.import-details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#526253;font-size:14px;font-weight:650}
+.import-details>summary::-webkit-details-marker{display:none}
+.import-details>summary::after{content:"＋";font-size:18px;color:#879788;font-weight:400}
+.import-details[open]>summary::after{content:"−"}
+.import-details[open]>summary{margin-bottom:15px}
+.import-panel{padding:16px 18px}
+html[data-theme="dark"] .import-details>summary{color:#dce5d8}
+.board-theme-control{gap:5px}
+@media(max-width:850px){.board-theme-control{flex:1}.board-theme-control .piece-set-select{max-width:125px;min-width:95px}}
 </style>
 </head>
 <body>
@@ -273,6 +302,12 @@ html[data-theme="dark"] .sq.legal-capture::after{
         <select class="piece-set-select" id="pieceSetSelect" aria-label="Набор шахматных фигур">
           <option value="cburnett">Cburnett</option>
           <option value="cburnett-v2">Cburnett V2</option>
+        </select>
+      </label>
+      <label class="piece-set-control board-theme-control" for="boardThemeSelect">
+        <span class="piece-set-label">Доска</span>
+        <select class="piece-set-select" id="boardThemeSelect" aria-label="Цветовая тема доски">
+          <option value="classic">Классика</option><option value="green">Зелёная</option><option value="blue">Голубая</option><option value="purple">Лавандовая</option><option value="slate">Графитовая</option>
         </select>
       </label>
       <div class="theme-switch" role="group" aria-label="Тема оформления">
@@ -333,8 +368,9 @@ html[data-theme="dark"] .sq.legal-capture::after{
         <div id="status" class="status" style="margin-top:11px">Готово к анализу.</div>
         <div class="hint">Движок работает прямо в Safari на устройстве. Для iPhone используется однопоточная WASM-сборка: настройка потоков зафиксирована на 1. Полный движок может анализировать заметно дольше, чем на ПК. Для экономии памяти оставь Hash 128 МБ.</div>
       </section>
-      <section class="panel" id="plannerPanel" hidden aria-hidden="true">
-        <h2 class="section-title">4. Снимок Discord Chess in the Park</h2>
+      <section class="panel import-panel" id="plannerPanel">
+        <details class="import-details">
+          <summary>Импорт позиции по скриншоту</summary>
         <label class="label" for="plannerFile">Импортируй скриншот доски или Planner</label>
         <input class="file-input" id="plannerFile" type="file" accept="image/png,image/jpeg,image/webp">
         <div class="row" style="margin-top:10px">
@@ -349,6 +385,7 @@ html[data-theme="dark"] .sq.legal-capture::after{
         <div class="hint" id="plannerHelp">Выбери скриншот. Приложение попробует автоматически найти доску и распознать фигуры, а затем перенесёт позицию на основную доску. Проверь результат перед анализом.</div>
         <div class="hint">Распознавание выполняется в браузере на этом компьютере. Поддерживаются многие 2D-наборы фигур и темы. Необычные или частично закрытые фигуры могут распознаться неверно — проверь доску и при необходимости исправь клетки редактором.</div>
         <div class="row" style="margin-top:9px"><button type="button" class="btn" id="copyImageFenBtn" disabled>Распознать снимок ещё раз</button></div>
+        </details>
       </section>
       
     </aside>
@@ -397,12 +434,20 @@ function setPieceSet(value){
 }
 
 let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=null, engineReady=false, engineBusy=false, lastBest=null, lastPv='', pvLines={}, pendingSearch=null;
+let lastAnimatedMove=null;
 let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated=false, editorUndoStack=[];
 let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow=null;
 let chessVisionPromise=null, chessVision=null, lastRecognition=null;
 let pendingFrom=null, pendingLegalMoves=[], moveHistory=[], redoHistory=[], gameEnded=false;
 const $=id=>document.getElementById(id);
 
+function setBoardTheme(theme){
+ const allowed=['classic','green','blue','purple','slate'];
+ const value=allowed.includes(theme)?theme:'classic';
+ document.documentElement.dataset.boardTheme=value;
+ try{localStorage.setItem('chess-study-board-theme',value);}catch(_){}
+ const select=$('boardThemeSelect');if(select)select.value=value;
+}
 function setTheme(theme){
  const value=theme==='dark'?'dark':'light';
  document.documentElement.dataset.theme=value;
@@ -429,7 +474,8 @@ function toFEN(s){let rows=[];for(let r=0;r<8;r++){let row='',empty=0;for(let c=
 function squareName(r,c){return String.fromCharCode(97+c)+(8-r);}
 function drawBoard(){
  const el=$('board');el.innerHTML='';
- for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let idx=r*8+c;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);if(idx===pendingFrom)sq.classList.add('selected');if(pendingLegalMoves.includes(idx))sq.classList.add(boardState.board[idx]?'legal-capture':'legal-target');let pc=boardState.board[idx];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.innerHTML=pieceImageMarkup(pc);sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
+ for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let idx=r*8+c;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);if(idx===pendingFrom)sq.classList.add('selected');if(pendingLegalMoves.includes(idx))sq.classList.add(boardState.board[idx]?'legal-capture':'legal-target');let pc=boardState.board[idx];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.innerHTML=pieceImageMarkup(pc);if(lastAnimatedMove&&idx===lastAnimatedMove.to){span.classList.add('piece-enter');span.style.setProperty('--move-x',((lastAnimatedMove.from%8)-(lastAnimatedMove.to%8))*100+'%');span.style.setProperty('--move-y',(Math.floor(lastAnimatedMove.from/8)-Math.floor(lastAnimatedMove.to/8))*100+'%');}sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
+ lastAnimatedMove=null;
  const files=$('filesCoords');
  if(files){files.innerHTML='';for(let vc=0;vc<8;vc++){const c=flipped?7-vc:vc;const label=document.createElement('span');label.textContent=String.fromCharCode(97+c);files.appendChild(label);}}
  $('turnLabel').textContent=boardState.turn==='w'?'Ход белых':'Ход чёрных';$('fenShort').textContent=boardState.turn==='w'?'White to move':'Black to move';
@@ -519,7 +565,7 @@ function applyBoardMove(from,to,promo=''){
  if(color==='b')boardState.full=String(Number(boardState.full||1)+1);
  boardState.turn=color==='w'?'b':'w';
  const uci=fromSq+toSq+(pawn&&((color==='w'&&Math.floor(to/8)===0)||(color==='b'&&Math.floor(to/8)===7))?(promo||'q').toLowerCase():'');
- redoHistory=[];moveHistory.push({uci,fenBefore,fenAfter:toFEN(boardState)});$('fenInput').value=toFEN(boardState);lastBest=null;pendingFrom=null;pendingLegalMoves=[];clearArrow();drawBoard();updateMoveHistory();$('playBestBtn').disabled=true;setStatus('Ход '+uci+' записан. Теперь ход '+(boardState.turn==='w'?'белых':'чёрных')+'.','ok');updateGameEndState();
+ redoHistory=[];moveHistory.push({uci,fenBefore,fenAfter:toFEN(boardState)});$('fenInput').value=toFEN(boardState);lastBest=null;lastAnimatedMove={from,to};pendingFrom=null;pendingLegalMoves=[];clearArrow();drawBoard();updateMoveHistory();$('playBestBtn').disabled=true;setStatus('Ход '+uci+' записан. Теперь ход '+(boardState.turn==='w'?'белых':'чёрных')+'.','ok');updateGameEndState();
 }
 function clearRayOnBoard(board,from,to){
  const fr=Math.floor(from/8),fc=from%8,tr=Math.floor(to/8),tc=to%8;
@@ -1026,6 +1072,7 @@ $('editBtn').onclick=()=>enableEditor(!editing);
 $('themeLightBtn').onclick=()=>setTheme('light');
 $('themeDarkBtn').onclick=()=>setTheme('dark');
 $('pieceSetSelect').addEventListener('change',()=>setPieceSet($('pieceSetSelect').value));
+$('boardThemeSelect').addEventListener('change',()=>setBoardTheme($('boardThemeSelect').value));
 $('clearBoardBtn').onclick=()=>{
  if(boardState.board.some(Boolean)){pushEditorSnapshot();boardState.board=Array(64).fill(null);boardState.ep='-';boardState.half='0';gameEnded=false;moveHistory=[];redoHistory=[];updateMoveHistory();drawBoard();$('fenInput').value=toFEN(boardState);updateEditorUndoButton();}
 };
@@ -1037,12 +1084,12 @@ $('playBestBtn').onclick=()=>{try{const uci=$('playBestBtn').dataset.uci||'';if(
 $('undoMoveBtn').onclick=undoLastMove;
 $('redoMoveBtn').onclick=redoLastMove;
 $('copyImageFenBtn').onclick=recognizePlannerPosition;
-let savedTheme='light',savedPieceSet='cburnett';
-try{savedTheme=localStorage.getItem('chess-study-theme')||'light';savedPieceSet=localStorage.getItem('chess-study-piece-set')||'cburnett';}catch(_){}
+let savedTheme='light',savedPieceSet='cburnett',savedBoardTheme='classic';
+try{savedTheme=localStorage.getItem('chess-study-theme')||'light';savedPieceSet=localStorage.getItem('chess-study-piece-set')||'cburnett';savedBoardTheme=localStorage.getItem('chess-study-board-theme')||'classic';}catch(_){}
 selectedPieceSet=savedPieceSet==='cburnett-v2'?'cburnett-v2':'cburnett';
 $('pieceSetSelect').value=selectedPieceSet;
 pendingFrom=null;
-initPalette();boardState=parseFEN(START_FEN);drawBoard();updateEditorUndoButton();setTheme(savedTheme);updateModeHint();
+initPalette();boardState=parseFEN(START_FEN);drawBoard();updateEditorUndoButton();setTheme(savedTheme);setBoardTheme(savedBoardTheme);updateModeHint();
 window.addEventListener('resize',()=>{if(lastBest)drawArrow(lastBest.from,lastBest.to);});
 // Installable Safari/PWA shell. The app requires HTTPS for service workers.
 if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
