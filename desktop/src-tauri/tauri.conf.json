@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ChessStudy Pro",
+  "version": "1.0.0",
+  "identifier": "com.deskat.chessstudypro",
+  "build": {
+    "frontendDist": "../app-content"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "ChessStudy Pro — Windows",
+        "width": 1600,
+        "height": 1100,
+        "minWidth": 1100,
+        "minHeight": 760,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "shortDescription": "Шахматный анализатор ChessStudy Pro",
+    "category": "Utility",
+    "icon": [
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "resources": {
+      "../stockfish/": "stockfish/",
+      "../STOCKFISH-COPYING.txt": "stockfish/COPYING.txt",
+      "../STOCKFISH-NOTICE.txt": "stockfish/NOTICE.txt"
+    },
+    "windows": {
+      "nsis": {
+        "displayLanguageSelector": false,
+        "languages": [
+          "Russian"
+        ],
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico"
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      }
+    }
+  }
+}
