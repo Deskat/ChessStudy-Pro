@@ -21,17 +21,17 @@ for (const page of pages) {
   }
 
   const html = fs.readFileSync(file, 'utf8');
-  const ids = [...html.matchAll(/\\bid=["']([^"']+)["']/g)].map(match => match[1]);
+  const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
   const duplicates = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
   if (duplicates.length) fail(page, 'duplicate HTML id values: ' + duplicates.join(', '));
 
   const idSet = new Set(ids);
-  const referencedIds = [...new Set([...html.matchAll(/\\$\\('([^']+)'\\)/g)].map(match => match[1]))];
+  const referencedIds = [...new Set([...html.matchAll(/\$\('([^']+)'\)/g)].map(match => match[1]))];
   const missingIds = referencedIds.filter(id => !idSet.has(id));
   if (missingIds.length) fail(page, 'JavaScript refers to missing elements: ' + missingIds.join(', '));
 
-  const scripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)]
-    .filter(match => !/\\bsrc\\s*=/.test(match[1]));
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
+    .filter(match => !/\bsrc\s*=/.test(match[1]));
   if (scripts.length !== 1) {
     fail(page, 'expected one inline application script; found ' + scripts.length);
   }
@@ -66,7 +66,7 @@ for (const page of pages) {
     fail(page, 'mobile board width override is not constrained');
   }
 
-  const functionNames = [...html.matchAll(/\\bfunction\\s+([A-Za-z_$][\\w$]*)\\s*\\(/g)]
+  const functionNames = [...html.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)]
     .map(match => match[1]);
   const duplicateFunctions = [...new Set(functionNames.filter((name, index) => functionNames.indexOf(name) !== index))];
   if (duplicateFunctions.length) fail(page, 'duplicate function declarations: ' + duplicateFunctions.join(', '));
@@ -85,9 +85,9 @@ for (const asset of requiredAssets) {
 }
 
 if (failures.length) {
-  process.stderr.write('ChessStudy static audit FAILED\\n' + failures.map(item => '- ' + item).join('\\n') + '\\n');
+  process.stderr.write('ChessStudy static audit FAILED\n' + failures.map(item => '- ' + item).join('\n') + '\n');
   process.exit(1);
 }
 
-process.stdout.write('ChessStudy static audit passed.\\n');
-process.stdout.write('Checked: mobile + PC HTML, inline JavaScript syntax, unique IDs, element references, core chess features and local assets.\\n');
+process.stdout.write('ChessStudy static audit passed.\n');
+process.stdout.write('Checked: mobile + PC HTML, inline JavaScript syntax, unique IDs, element references, core chess features and local assets.\n');
