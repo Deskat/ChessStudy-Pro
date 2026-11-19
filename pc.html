@@ -788,7 +788,7 @@ function isInsufficientMaterial(){
  return false;
 }
 function getPositionKey(fen){
- return fen.trim().split(/\\s+/).slice(0,4).join(' ');
+ return fen.trim().split(/\s+/).slice(0,4).join(' ');
 }
 function countCurrentPositionOccurrences(){
  if(!boardState)return 0;
@@ -1202,7 +1202,7 @@ function handleBest(line){
  const weakMove=playMode==='comeback'&&!comebackActivated&&comebackSide===boardState.turn;
  let strong=$('moveResult').querySelector('strong');if(!strong){strong=document.createElement('strong');$('moveResult').prepend(strong);}
  strong.textContent=(weakMove?'Ослабленный, но обдуманный ход: ':playMode==='comeback'?'Comeback — сильный ход: ':'Лучший ход: ')+text;
- renderPvLines();
+ if(Object.keys(pvLines).length)renderPvLines();else $('pvLine').textContent='Линии вариантов не получены.';
  $('playBestBtn').disabled=false;$('playBestBtn').dataset.uci=from+to+promo;
  $('playBestBtn').textContent=weakMove?'Сделать ход':'Сделать ход';
  if(weakMove)setStatus('Comeback: выбран ослабленный, но рассчитанный ход. После отставания примерно на 2 пешки движок перейдёт на полную силу.','ok');
