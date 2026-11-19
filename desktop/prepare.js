@@ -131,6 +131,7 @@ const bridge = [
   '    }',
   '    select.value = String(Math.min(6, maximum));',
   '    select.disabled = false;',
+  '    if (typeof setStatus === "function") setStatus("ChessStudy Pro для Windows запущен. Нативный Stockfish готов к анализу.", "ok");',
   '    const variant = document.getElementById("engineVariant");',
   '    if (variant) { variant.value = "full"; variant.disabled = true; if (variant.parentElement) variant.parentElement.style.display = "none"; }',
   '  }',
