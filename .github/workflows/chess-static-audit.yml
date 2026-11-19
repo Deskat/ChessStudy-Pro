@@ -1,0 +1,34 @@
+name: ChessStudy static audit
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "index.html"
+      - "pc.html"
+      - "tests/**"
+      - ".github/workflows/chess-static-audit.yml"
+  pull_request:
+    paths:
+      - "index.html"
+      - "pc.html"
+      - "tests/**"
+      - ".github/workflows/chess-static-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate application pages
+        run: node tests/static-audit.js
