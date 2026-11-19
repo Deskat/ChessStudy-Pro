@@ -208,37 +208,45 @@ html[data-theme="dark"] .files-coords{color:#d5b58c}
 .piece-image{width:100%;height:100%;object-fit:contain}
 /* End-of-game labels inspired by the supplied checkmate reference. */
 /* Chess.com-inspired end-of-game board effects: tiny result glyphs on both kings + falling confetti. */
-.game-end-overlay{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:hidden}
+.game-end-overlay{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:hidden;isolation:isolate}
+.game-end-overlay.mate::before{
+ content:"";position:absolute;inset:0;z-index:6;pointer-events:none;
+ background:radial-gradient(circle at center,rgba(227,77,73,.22),rgba(227,77,73,.04) 72%,transparent 100%);
+ animation:mate-board-flash .72s ease-out both;
+}
+@keyframes mate-board-flash{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
 .king-result-glyph{
  position:absolute;z-index:14;display:grid;place-items:center;
- width:clamp(24px,4.6%,32px);aspect-ratio:1;border-radius:50%;
+ width:clamp(26px,5.2%,36px);aspect-ratio:1;border-radius:50%;
  box-sizing:border-box;border:2px solid rgba(255,255,255,.98);
- box-shadow:0 1px 5px rgba(0,0,0,.42);
+ box-shadow:0 2px 9px rgba(0,0,0,.48),0 0 0 2px rgba(255,255,255,.16);
  transform:translate(-100%,0);overflow:visible;
- animation:result-glyph-appear .22s cubic-bezier(.18,.8,.25,1) both;
+ animation:result-glyph-appear .46s cubic-bezier(.18,.9,.24,1.25) both;
 }
 .king-result-glyph svg{display:block;width:82%;height:82%;overflow:visible}
 .king-result-glyph.loss{background:#e34d49;color:#fff}
 .king-result-glyph.win{background:#7eae53;color:#fff}
 .king-result-glyph.draw{background:#73818a;color:#fff}
-@keyframes result-glyph-appear{from{opacity:0;scale:.55}to{opacity:1;scale:1}}
+@keyframes result-glyph-appear{0%{opacity:0;scale:.28}62%{opacity:1;scale:1.18}82%{scale:.94}100%{opacity:1;scale:1}}
 .result-confetti{
- position:absolute;top:-7%;z-index:8;width:6px;height:11px;
+ position:absolute;top:-9%;z-index:8;width:7px;height:13px;
  border-radius:2px;background:#8dbb67;opacity:0;
- animation:result-confetti-fall var(--confetti-duration,1.8s) cubic-bezier(.2,.65,.35,1) var(--confetti-delay,0s) both;
+ animation:result-confetti-fall var(--confetti-duration,2.2s) cubic-bezier(.2,.62,.32,1) var(--confetti-delay,0s) both;
 }
 .result-confetti:nth-child(3n){background:#f1c45e;width:5px;height:9px}
 .result-confetti:nth-child(3n + 1){background:#87b5cc}
 .result-confetti:nth-child(4n){border-radius:50%;width:6px;height:6px}
 .result-confetti:nth-child(5n){background:#d98c8a;width:4px;height:12px}
 @keyframes result-confetti-fall{
- 0%{top:-7%;transform:translateX(0) rotate(0deg);opacity:0}
+ 0%{top:-9%;transform:translate3d(0,0,0) rotate(0deg);opacity:0}
  12%{opacity:1}
- 100%{top:108%;transform:translateX(var(--confetti-drift,0px)) rotate(calc(var(--confetti-rotation,0deg) + 540deg));opacity:.18}
+ 82%{opacity:.95}
+ 100%{top:108%;transform:translate3d(var(--confetti-drift,0px),0,0) rotate(calc(var(--confetti-rotation,0deg) + 540deg));opacity:0}
 }
 @media(prefers-reduced-motion:reduce){
  .king-result-glyph{animation:none}
- .result-confetti{animation:none;opacity:.55;top:8%}
+ .result-confetti{animation:none;opacity:.65;top:8%}
+ .game-end-overlay.mate::before{animation:none;opacity:.2}
 }
 /* App identity: centered black knight from Cburnett V2. */
 .logo.brand-knight{width:48px;height:48px;min-width:48px;border-radius:15px;background:#e4ebe1;box-shadow:0 3px 10px rgba(39,55,40,.12);overflow:hidden;padding:2px;display:grid;place-items:center}
@@ -327,6 +335,18 @@ html[data-theme="dark"] .import-details>summary{color:#dce5d8}
   z-index:1;
 }
 
+/* Chess.com-style check warning on the king's current square. */
+.sq.in-check{isolation:isolate}
+.sq.in-check::before{
+ content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+ background:radial-gradient(circle at center,rgba(225,67,61,.88) 0%,rgba(225,67,61,.62) 56%,rgba(184,48,44,.35) 100%);
+ animation:check-square-pulse .9s ease-in-out infinite alternate;
+}
+.sq.in-check .coord{z-index:3;color:#fff!important;text-shadow:0 1px 2px rgba(70,0,0,.5)}
+@keyframes check-square-pulse{from{opacity:.72;filter:saturate(.88)}to{opacity:1;filter:saturate(1.18)}}
+@media(prefers-reduced-motion:reduce){.sq.in-check::before{animation:none;opacity:.88}}
+
+
 
 /* Camera/photo entry points. */
 .planner-photo-actions .btn{flex:1 1 180px;min-width:0}
@@ -342,6 +362,11 @@ html[data-theme="dark"] .planner-photo-actions .btn.primary{background:#637f68;b
 .engine-panel-state{margin-left:auto;color:#7b847c;font-size:11px;font-weight:600;text-align:right}
 .engine-panel-state.is-running{color:#b87929}
 .engine-body{padding-top:14px}
+.engine-actions{display:grid;gap:10px;margin-top:12px}
+.engine-action-buttons{display:flex;gap:8px;margin:0}
+.engine-action-buttons .btn{flex:1;min-width:0}
+.engine-actions .status{min-width:0;overflow-wrap:anywhere}
+@media(max-width:420px){.engine-action-buttons .btn{padding-left:9px;padding-right:9px;font-size:12px}}
 
 /* Keep only the Stockfish title row visible when collapsed; the full settings area opens below it. */
 .engine-details>summary{
@@ -446,11 +471,13 @@ html[data-theme="dark"] .engine-panel-state.is-running{color:#e3b66d}
           <div><label class="label" for="hashSelect">Память Hash</label><select class="select" id="hashSelect" style="width:100%"><option value="128" selected>128 МБ</option><option value="256">256 МБ</option><option value="512">512 МБ</option></select></div>
           <div><label class="label" for="multiPvSelect">Вариантов</label><select class="select" id="multiPvSelect" style="width:100%"><option value="1">1 линия</option><option value="3" selected>3 линии</option><option value="5">5 линий</option></select></div>
         </div>
-        <div class="row" style="margin-top:11px"><button type="button" class="btn primary" id="analyzeBtn">Анализировать</button><button type="button" class="btn" id="stopBtn" disabled>Остановить</button></div>
-        <div id="status" class="status" style="margin-top:11px">Готово к анализу.</div>
         <div class="hint">Движок работает прямо в Safari на устройстве. Для iPhone используется однопоточная WASM-сборка: настройка потоков зафиксирована на 1. Полный движок может анализировать заметно дольше, чем на ПК. Для экономии памяти оставь Hash 128 МБ.</div>
           </div>
         </details>
+        <div class="engine-actions">
+          <div class="row engine-action-buttons"><button type="button" class="btn primary" id="analyzeBtn">Анализировать</button><button type="button" class="btn" id="stopBtn" disabled>Остановить</button></div>
+          <div id="status" class="status">Готово к анализу.</div>
+        </div>
       </section>
       <section class="panel import-panel" id="plannerPanel">
         <details class="import-details">
@@ -562,7 +589,8 @@ function toFEN(s){let rows=[];for(let r=0;r<8;r++){let row='',empty=0;for(let c=
 function squareName(r,c){return String.fromCharCode(97+c)+(8-r);}
 function drawBoard(){
  const el=$('board');el.innerHTML='';
- for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let idx=r*8+c;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);if(idx===pendingFrom)sq.classList.add('selected');if(pendingLegalMoves.includes(idx))sq.classList.add(boardState.board[idx]?'legal-capture':'legal-target');let pc=boardState.board[idx];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.innerHTML=pieceImageMarkup(pc);if(lastAnimatedMove&&idx===lastAnimatedMove.to){span.classList.add('piece-enter');span.style.setProperty('--move-x',((lastAnimatedMove.from%8)-(lastAnimatedMove.to%8))*100+'%');span.style.setProperty('--move-y',(Math.floor(lastAnimatedMove.from/8)-Math.floor(lastAnimatedMove.to/8))*100+'%');}sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
+ const checkedKingIndex=kingIsInCheck(boardState.board,boardState.turn)?boardState.board.indexOf(boardState.turn==='w'?'K':'k'):-1;
+ for(let vr=0;vr<8;vr++){for(let vc=0;vc<8;vc++){let r=flipped?7-vr:vr,c=flipped?7-vc:vc;let idx=r*8+c;let sq=document.createElement('div');sq.className='sq '+((r+c)%2===0?'light':'dark');sq.dataset.r=r;sq.dataset.c=c;sq.dataset.square=squareName(r,c);if(idx===checkedKingIndex)sq.classList.add('in-check');if(idx===pendingFrom)sq.classList.add('selected');if(pendingLegalMoves.includes(idx))sq.classList.add(boardState.board[idx]?'legal-capture':'legal-target');let pc=boardState.board[idx];if(pc){let span=document.createElement('span');span.className='piece '+(pc===pc.toUpperCase()?'white':'black');span.innerHTML=pieceImageMarkup(pc);if(lastAnimatedMove&&idx===lastAnimatedMove.to){span.classList.add('piece-enter');span.style.setProperty('--move-x',((lastAnimatedMove.from%8)-(lastAnimatedMove.to%8))*100+'%');span.style.setProperty('--move-y',(Math.floor(lastAnimatedMove.from/8)-Math.floor(lastAnimatedMove.to/8))*100+'%');}sq.appendChild(span);}if((!flipped&&vc===0)||(flipped&&vc===7)){let co=document.createElement('span');co.className='coord';co.textContent=8-r;sq.appendChild(co);}sq.addEventListener('click',()=>boardClick(r,c));el.appendChild(sq);}}
  lastAnimatedMove=null;
  const files=$('filesCoords');
  if(files){files.innerHTML='';for(let vc=0;vc<8;vc++){const c=flipped?7-vc:vc;const label=document.createElement('span');label.textContent=String.fromCharCode(97+c);files.appendChild(label);}}
@@ -761,11 +789,11 @@ function resultKingTag(piece,label,kind,icon){
 }
 function buildResultConfetti(){
  let html='';
- for(let i=0;i<36;i++){
-  const left=(3+(i*43)%94);
-  const delay=((i%9)*0.075).toFixed(3);
-  const duration=(1.35+(i%7)*0.17).toFixed(2);
-  const drift=((i%5)-2)*12;
+ for(let i=0;i<48;i++){
+  const left=(2+(i*37)%96);
+  const delay=((i%12)*0.055).toFixed(3);
+  const duration=(1.7+(i%7)*0.15).toFixed(2);
+  const drift=((i%7)-3)*13;
   const rotation=(i*47)%170;
   html+='<i class="result-confetti" style="left:'+left+'%;--confetti-delay:'+delay+'s;--confetti-duration:'+duration+'s;--confetti-drift:'+drift+'px;--confetti-rotation:'+rotation+'deg"></i>';
  }
@@ -779,6 +807,7 @@ function updateGameEndState(){
  const canMove=sideHasLegalMove(side);
  gameEnded=!canMove;
  if(!canMove){
+  if(overlay){overlay.classList.toggle('mate',checked);overlay.classList.toggle('draw',!checked);}
   const crown='<svg viewBox="0 0 48 44" aria-hidden="true"><path fill="currentColor" d="M5 10 13 17 19 5 25 17 35 7 43 11 39 31 9 31Z"/><path fill="currentColor" d="M10 35H38V39H10Z"/></svg>';
   const check='<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M8 8 22 22M22 8 8 22" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/></svg>';
   const draw='<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M6 15h18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>';
@@ -792,7 +821,7 @@ function updateGameEndState(){
   }
   if(overlay)overlay.hidden=false;
  }else{
-  if(overlay){overlay.hidden=true;overlay.innerHTML='';}
+  if(overlay){overlay.hidden=true;overlay.innerHTML='';overlay.classList.remove('mate','draw');}
   gameEnded=false;
  }
 }
