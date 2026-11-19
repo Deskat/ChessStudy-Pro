@@ -901,10 +901,9 @@ async function recognizePlannerPosition(){
   const vision=await getChessRecognizer();
   let result;
   try{result=await vision.recognizer.recognize(plannerImage);}
-  catch(primaryError){
-   setStatus('Основной CDN недоступен, пробую резервный…','loading');
-   vision.recognizer=vision.fallback();
-   result=await vision.recognizer.recognize(plannerImage);
+  catch(recognitionError){
+   const reason=recognitionError&&recognitionError.message?': '+recognitionError.message:'';
+   throw new Error('Не удалось автоматически распознать эту фотографию. Сними доску почти строго сверху, чтобы были видны все 64 клетки без бликов и перекрытий, или попробуй скриншот'+reason);
   }
   const {resolveOrientation,placementToFen}=vision;
   if(!result){throw new Error('Не удалось найти шахматную доску на снимке. Загрузи полный и чёткий скриншот, где видны все 64 клетки.');}
