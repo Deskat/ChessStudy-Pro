@@ -60,6 +60,11 @@ html = replaceExactly(html,
   'native CPU thread setting');
 
 html = replaceExactly(html,
+  "$('engineDepth').textContent=engineLabel+' · 1 поток';",
+  "$('engineDepth').textContent=engineLabel+' · '+$('threadsSelect').value+' поток(ов)';",
+  'native engine initial depth label');
+
+html = replaceExactly(html,
   "const d=line.match(/\\bdepth (\\d+)/);if(d)$('engineDepth').textContent='Stockfish 19 · глубина '+d[1]+' · 1 поток';",
   "const d=line.match(/\\bdepth (\\d+)/);if(d)$('engineDepth').textContent='Stockfish 19 · глубина '+d[1]+' · '+$('threadsSelect').value+' поток(ов)';",
   'native engine depth label');
