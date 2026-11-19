@@ -32,8 +32,7 @@
     "shortDescription": "Шахматный анализатор ChessStudy Pro",
     "category": "Utility",
     "icon": [
-      "icons/icon.ico",
-      "icons/icon.png"
+      "icons/icon.ico"
     ],
     "resources": {
       "../stockfish/": "stockfish/",
