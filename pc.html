@@ -828,7 +828,7 @@ function updateGameEndState(){
  gameEnded=false;
  if(overlay){overlay.hidden=true;overlay.innerHTML='';overlay.classList.remove('mate','draw');}
 }
-function applyMoveText(function applyMoveText(text){const m=text.trim().toLowerCase().match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);if(!m)throw Error('Введи ход в формате e2e4 или e7e8q.');const sq=m[1]+m[2];const index=s=>((8-Number(s[1]))*8)+(s.charCodeAt(0)-97);applyBoardMove(index(m[1]),index(m[2]),m[3]||'');}
+function applyMoveText(text){const m=text.trim().toLowerCase().match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);if(!m)throw Error('Введи ход в формате e2e4 или e7e8q.');const sq=m[1]+m[2];const index=s=>((8-Number(s[1]))*8)+(s.charCodeAt(0)-97);applyBoardMove(index(m[1]),index(m[2]),m[3]||'');}
 function updateMoveHistory(){
  $('moveCount').textContent='Всего ходов: '+moveHistory.length;
  $('moveHistory').textContent=moveHistory.length?moveHistory.map((m,i)=>`${Math.floor(i/2)+1}${i%2===0?'.':'...'} ${m.uci}`).join('  '):'Пока ходов нет.';
