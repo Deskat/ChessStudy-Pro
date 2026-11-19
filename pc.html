@@ -987,7 +987,7 @@ async function recognizePlannerPosition(){
   const parsed=parseFEN(fen);
   enableEditor(false);
   pendingFrom=null;
-  setPosition(fen,true);
+  setPosition(fen);
   lastRecognition=result;
   // Fenshot returns an axis-aligned board box in its (possibly downscaled) frame.
   // Convert it back to the coordinates of the original uploaded image for arrow overlay.
@@ -1212,6 +1212,7 @@ function handleBest(line){
 }
 async function analyze(){
  try{
+  cancelPromotion();
   if(editing)enableEditor(false);
   boardState=parseFEN($('fenInput').value);$('fenInput').value=toFEN(boardState);drawBoard();
   if(playMode==='comeback'&&comebackSide===null)comebackSide=boardState.turn;
@@ -1231,7 +1232,7 @@ async function analyze(){
   updateModeHint();
  }catch(e){if(engine&&!engineReady){try{engine.terminate();}catch(_){}engine=null;}setStatus(e.message||'Ошибка анализа.','error');engineBusy=false;$('analyzeBtn').disabled=false;$('stopBtn').disabled=true;$('playModeSelect').disabled=false;}
 }
-$('loadFenBtn').onclick=()=>{try{enableEditor(false);setPosition($('fenInput').value,true);setStatus('Позиция загружена.','ok');}catch(e){setStatus(e.message,'error');}};
+$('loadFenBtn').onclick=()=>{try{enableEditor(false);setPosition($('fenInput').value);setStatus('Позиция загружена.','ok');}catch(e){setStatus(e.message,'error');}};
 $('copyFenBtn').onclick=async()=>{try{const fen=toFEN(boardState);await navigator.clipboard.writeText(fen);setStatus('Код позиции скопирован.','ok');}catch(e){$('fenInput').select();document.execCommand('copy');setStatus('Код позиции выделен.','ok');}};
 $('startBtn').onclick=()=>{enableEditor(false);setPosition(START_FEN);setStatus('Установлена начальная позиция.','ok');};
 $('flipBtn').onclick=()=>{const previous=lastBest;flipped=!flipped;drawBoard();if(previous)drawArrow(previous.from,previous.to);};
