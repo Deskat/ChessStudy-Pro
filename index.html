@@ -342,6 +342,27 @@ html[data-theme="dark"] .planner-photo-actions .btn.primary{background:#637f68;b
 .engine-panel-state{margin-left:auto;color:#7b847c;font-size:11px;font-weight:600;text-align:right}
 .engine-panel-state.is-running{color:#b87929}
 .engine-body{padding-top:14px}
+
+/* Keep only the Stockfish title row visible when collapsed; the full settings area opens below it. */
+.engine-details>summary{
+  min-height:42px;
+  padding:2px 0;
+  -webkit-user-select:none;
+  user-select:none;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.engine-details:not([open])>.engine-body{display:none!important}
+.engine-details[open]>.engine-body{display:block}
+@media(max-width:850px){
+  /* Slightly narrower result card, centered under the board. */
+  .move-result{
+    width:calc(100% - 14px);
+    max-width:560px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+}
 html[data-theme="dark"] .engine-summary-title{color:#e2e9df}
 html[data-theme="dark"] .engine-panel-state{color:#a0ab9d}
 html[data-theme="dark"] .engine-panel-state.is-running{color:#e3b66d}
