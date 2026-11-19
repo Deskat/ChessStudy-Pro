@@ -327,6 +327,25 @@ html[data-theme="dark"] .import-details>summary{color:#dce5d8}
   z-index:1;
 }
 
+
+/* Camera/photo entry points. */
+.planner-photo-actions .btn{flex:1 1 180px;min-width:0}
+.planner-photo-actions .btn.primary{background:#718b76;border-color:#718b76}
+html[data-theme="dark"] .planner-photo-actions .btn.primary{background:#637f68;border-color:#637f68}
+/* Collapsible Stockfish controls. Closing this disclosure only hides the controls. */
+.engine-panel{min-width:0}
+.engine-details>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;min-width:0}
+.engine-details>summary::-webkit-details-marker{display:none}
+.engine-details>summary::after{content:"＋";font-size:18px;line-height:1;color:#879788;font-weight:400;flex:0 0 auto}
+.engine-details[open]>summary::after{content:"−"}
+.engine-summary-title{font-size:15px;font-weight:650;color:#3b473e}
+.engine-panel-state{margin-left:auto;color:#7b847c;font-size:11px;font-weight:600;text-align:right}
+.engine-panel-state.is-running{color:#b87929}
+.engine-body{padding-top:14px}
+html[data-theme="dark"] .engine-summary-title{color:#e2e9df}
+html[data-theme="dark"] .engine-panel-state{color:#a0ab9d}
+html[data-theme="dark"] .engine-panel-state.is-running{color:#e3b66d}
+
 </style>
 </head>
 <body>
@@ -380,8 +399,10 @@ html[data-theme="dark"] .import-details>summary{color:#dce5d8}
         <button type="button" id="loadFenBtn">Загрузить</button>
         <button type="button" id="copyFenBtn">Копировать</button>
       </div>
-      <section class="panel">
-        <h2 class="section-title">Stockfish 19</h2>
+      <section class="panel engine-panel" id="enginePanel">
+        <details class="engine-details" id="engineDetails" open>
+          <summary><span class="engine-summary-title">Stockfish 19</span><span class="engine-panel-state" id="enginePanelState">Готов к запуску</span></summary>
+          <div class="engine-body">
         <div style="margin-bottom:11px">
           <label class="label" for="playModeSelect">Режим движка</label>
           <select class="select" id="playModeSelect" style="width:100%">
@@ -407,12 +428,18 @@ html[data-theme="dark"] .import-details>summary{color:#dce5d8}
         <div class="row" style="margin-top:11px"><button type="button" class="btn primary" id="analyzeBtn">Анализировать</button><button type="button" class="btn" id="stopBtn" disabled>Остановить</button></div>
         <div id="status" class="status" style="margin-top:11px">Готово к анализу.</div>
         <div class="hint">Движок работает прямо в Safari на устройстве. Для iPhone используется однопоточная WASM-сборка: настройка потоков зафиксирована на 1. Полный движок может анализировать заметно дольше, чем на ПК. Для экономии памяти оставь Hash 128 МБ.</div>
+          </div>
+        </details>
       </section>
       <section class="panel import-panel" id="plannerPanel">
         <details class="import-details">
-          <summary>Импорт позиции по скриншоту</summary>
-        <label class="label" for="plannerFile">Импортируй скриншот доски или Planner</label>
-        <input class="file-input" id="plannerFile" type="file" accept="image/png,image/jpeg,image/webp">
+          <summary>Импорт позиции по фото или скриншоту</summary>
+        <div class="row planner-photo-actions" style="margin-top:10px">
+          <button type="button" class="btn primary" id="plannerCameraBtn">Камера · сфотографировать доску</button>
+          <button type="button" class="btn" id="plannerGalleryBtn">Выбрать фото</button>
+        </div>
+        <input id="plannerCamera" type="file" accept="image/*" capture="environment" hidden>
+        <input id="plannerFile" type="file" accept="image/*" hidden>
         <div class="row" style="margin-top:10px">
           <button type="button" class="btn" id="calibratePlannerBtn" disabled>Указать углы вручную</button>
           <button type="button" class="btn subtle" id="resetPlannerBtn" disabled>Сбросить разметку</button>
@@ -422,7 +449,7 @@ html[data-theme="dark"] .import-details>summary{color:#dce5d8}
           <select class="select" id="plannerTurn"><option value="w">Белые</option><option value="b">Чёрные</option></select>
         </div>
         <canvas class="planner-canvas" id="plannerCanvas" hidden></canvas>
-        <div class="hint" id="plannerHelp">Выбери скриншот. Приложение попробует автоматически найти доску и распознать фигуры, а затем перенесёт позицию на основную доску. Проверь результат перед анализом.</div>
+        <div class="hint" id="plannerHelp">Сфотографируй всю доску почти строго сверху или выбери готовый скриншот. Приложение распознает фигуры и расставит их на основной доске. Проверь результат перед анализом.</div>
         <div class="hint">Распознавание выполняется в браузере на этом компьютере. Поддерживаются многие 2D-наборы фигур и темы. Необычные или частично закрытые фигуры могут распознаться неверно — проверь доску и при необходимости исправь клетки редактором.</div>
         <div class="row" style="margin-top:9px"><button type="button" class="btn" id="copyImageFenBtn" disabled>Распознать снимок ещё раз</button></div>
         </details>
@@ -784,7 +811,13 @@ function redoLastMove(){
   setStatus('Не удалось вернуть ход: '+e.message,'error');
  }
 }
-function setStatus(msg,type=''){const s=$('status');s.textContent=msg;s.className='status'+(type?' '+type:'');}
+function syncEnginePanelState(){
+  const badge=$('enginePanelState');if(!badge)return;
+  const label=engineBusy?'Анализ идёт':engineReady?'Движок готов':'Готов к запуску';
+  badge.textContent=label;
+  badge.classList.toggle('is-running',engineBusy);
+ }
+function setStatus(msg,type=''){const s=$('status');s.textContent=msg;s.className='status'+(type?' '+type:'');syncEnginePanelState();}
 function resetComebackState(){comebackSide=null;comebackActivated=false;activeSearch=null;pendingSearch=null;updateModeHint();}
 function updateModeHint(){
  const hint=$('modeHint');if(!hint)return;
@@ -916,120 +949,29 @@ async function recognizePlannerPosition(){
   $('plannerHelp').textContent='Автоматически перенести позицию не получилось. Можно попробовать ещё раз или воспользоваться FEN/редактором доски.';
  }finally{btn.disabled=false;}
 }
-$('plannerFile').addEventListener('change',ev=>{
- const file=ev.target.files&&ev.target.files[0];if(!file)return;
- if(!/^image\/(png|jpeg|webp)$/.test(file.type)){setStatus('Поддерживаются PNG, JPG и WebP.','error');return;}
- const url=URL.createObjectURL(file),img=new Image();
- img.onload=()=>{plannerImage=img;plannerCorners=[];lastRecognition=null;plannerArrow=null;plannerCalibrating=false;const c=$('plannerCanvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.hidden=false;$('calibratePlannerBtn').disabled=false;$('resetPlannerBtn').disabled=false;$('copyImageFenBtn').disabled=false;$('plannerHelp').textContent=`Снимок загружен (${img.naturalWidth}×${img.naturalHeight}). Запускаю автоматическое распознавание фигур…` ;drawPlannerCanvas();URL.revokeObjectURL(url);recognizePlannerPosition();};
- img.onerror=()=>{URL.revokeObjectURL(url);setStatus('Не удалось открыть изображение.','error');};img.src=url;
-});
-$('calibratePlannerBtn').addEventListener('click',()=>{if(!plannerImage)return;plannerCorners=[];plannerCalibrating=true;plannerArrow=null;$('plannerHelp').textContent='Кликни по четырём углам доски в порядке: верхний левый → верхний правый → нижний правый → нижний левый.';drawPlannerCanvas();});
-$('resetPlannerBtn').addEventListener('click',()=>{plannerCorners=[];plannerArrow=null;plannerCalibrating=false;$('plannerHelp').textContent='Углы сброшены. Нажми «Указать 4 угла доски» и отметь их заново.';drawPlannerCanvas();});
-$('plannerCanvas').addEventListener('click',ev=>{
- if(!plannerImage)return;const c=$('plannerCanvas'),r=c.getBoundingClientRect(),pt={x:(ev.clientX-r.left)*c.width/r.width,y:(ev.clientY-r.top)*c.height/r.height};
- if(plannerCalibrating){plannerCorners.push(pt);if(plannerCorners.length===4){plannerCalibrating=false;$('plannerHelp').textContent='Углы доски отмечены вручную. Автораспознавание позиции запускается кнопкой «Распознать снимок ещё раз».';}drawPlannerCanvas();}
-});
-function selectEditorPiece(ch){
- selectedPiece=ch;
- document.querySelectorAll('.piece-choice').forEach(btn=>btn.classList.toggle('active',btn.dataset.piece===ch));
-}
-function initPalette(){
- const p=$('palette');p.innerHTML='';
- const groups=[
-  {label:'Белые фигуры',style:'white-group',pieces:['K','Q','R','B','N','P']},
-  {label:'Чёрные фигуры',style:'black-group',pieces:['k','q','r','b','n','p']}
- ];
- const names={K:'Белый король',Q:'Белый ферзь',R:'Белая ладья',B:'Белый слон',N:'Белый конь',P:'Белая пешка',k:'Чёрный король',q:'Чёрный ферзь',r:'Чёрная ладья',b:'Чёрный слон',n:'Чёрный конь',p:'Чёрная пешка'};
- for(const groupData of groups){
-  const group=document.createElement('div');group.className='palette-group '+groupData.style;
-  const title=document.createElement('div');title.className='palette-group-title';title.textContent=groupData.label;group.appendChild(title);
-  const row=document.createElement('div');row.className='palette-row';
-  for(const ch of groupData.pieces){
-   const btn=document.createElement('button');btn.type='button';btn.className='piece-choice';btn.dataset.piece=ch;
-   btn.innerHTML=pieceImageMarkup(ch);btn.title=names[ch];btn.setAttribute('aria-label',names[ch]);
-   btn.onclick=()=>selectEditorPiece(ch);row.appendChild(btn);
-  }
-  group.appendChild(row);p.appendChild(group);
+function loadPlannerImage(file){
+  if(!file)return;
+  const looksLikeImage=file.type.startsWith('image/')||/\.(png|jpe?g|webp|heic|heif|avif)$/i.test(file.name||'');
+  if(!looksLikeImage){setStatus('Выбери фотографию в формате изображения.','error');return;}
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{
+   plannerImage=img;plannerCorners=[];lastRecognition=null;plannerArrow=null;plannerCalibrating=false;
+   const c=$('plannerCanvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.hidden=false;
+   $('calibratePlannerBtn').disabled=false;$('resetPlannerBtn').disabled=false;$('copyImageFenBtn').disabled=false;
+   $('plannerHelp').textContent=`Фото загружено (${img.naturalWidth}×${img.naturalHeight}). Распознаю расположение фигур на 64 клетках…`;
+   drawPlannerCanvas();URL.revokeObjectURL(url);recognizePlannerPosition();
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);setStatus('Не удалось открыть это фото. Попробуй JPEG или PNG.','error');};
+  img.src=url;
  }
- const tools=document.createElement('div');tools.className='palette-tools';
- const empty=document.createElement('button');empty.type='button';empty.className='piece-choice empty';empty.dataset.piece='-';
- empty.innerHTML='<span class="empty-icon">×</span><span>Пустая клетка</span>';empty.title='Убрать фигуру с выбранной клетки';
- empty.onclick=()=>selectEditorPiece('-');tools.appendChild(empty);p.appendChild(tools);
- selectEditorPiece(selectedPiece);
-}
-function updateEditorUndoButton(){const button=$('editorUndoBtn');if(button)button.disabled=editorUndoStack.length===0;}
-function pushEditorSnapshot(){
- if(!boardState)return;
- editorUndoStack.push(boardState.board.slice());
- if(editorUndoStack.length>80)editorUndoStack.shift();
- updateEditorUndoButton();
-}
-function undoEditorAction(){
- if(!editorUndoStack.length)return;
- boardState.board=editorUndoStack.pop();boardState.ep='-';$('fenInput').value=toFEN(boardState);
- drawBoard();updateEditorUndoButton();setStatus('Последнее изменение расстановки отменено.','ok');
-}
-function enableEditor(on){
- editing=on;
- if(on){pendingFrom=null;pendingLegalMoves=[];gameEnded=false;const overlay=$('gameEndOverlay');if(overlay)overlay.hidden=true;}
- $('editorArea').hidden=!on;
- $('editState').textContent=on?'Редактор включён':'Выключен';
- $('editBtn').textContent=on?'Закрыть редактор':'Открыть редактор';
- updateEditorUndoButton();clearArrow();
- if(!on&&boardState)updateGameEndState();
-}
-function moveToFen(sq){const from=sq.slice(0,2);return from;}
-function ensureEngine(){
- if(engineReady)return Promise.resolve();
- if(engine)return Promise.resolve();
- const variant=$('engineVariant').value;
- const engineLabel=variant==='lite'?'Stockfish 19 Lite':'Stockfish 19 Full';
- const engineFile=variant==='lite'?'stockfish-19-lite-single.js':'stockfish-19-single.js';
- const engineBase=new URL('./engine/', location.href).href;
- setStatus('Загружаю '+engineLabel+' для iPhone. '+(variant==='lite'?'Загрузка около 1,7 МБ.':'Загрузка около 94 МБ; на медленном интернете это может занять время.'),'loading');
- $('engineVariant').disabled=true;
- return new Promise(async (resolve,reject)=>{
-   let timer=null, settled=false;
-   const cleanup=()=>{if(timer)clearTimeout(timer);};
-   const fail=err=>{
-    if(settled)return;settled=true;cleanup();
-    if(engine){try{engine.terminate();}catch(_){}}
-    engine=null;engineReady=false;
-    $('engineVariant').disabled=false;
-    reject(err instanceof Error?err:new Error(String(err||'Не удалось запустить Stockfish.')));
-   };
-   try{
-    // Launch the real same-origin worker file. Stockfish derives the matching
-    // .wasm URL from its own script URL; a Blob worker would lose that path.
-    const workerUrl=new URL(engineFile,engineBase);
-    engine=new Worker(workerUrl.href);
-    timer=setTimeout(()=>fail(new Error('Stockfish загружается слишком долго. Проверь интернет и попробуй ещё раз.')),360000);
-    engine.onmessage=ev=>{
-     const line=String(ev.data);
-     if(line==='uciok'){
-      engine.postMessage('isready');
-     }
-     else if(line==='readyok'){
-      if(!engineReady){
-       engineReady=true;settled=true;cleanup();
-       setStatus(engineLabel+' готов. Работает на iPhone локально, в 1 поток.','ok');
-       $('engineDepth').textContent=engineLabel+' · 1 поток';
-       resolve();
-      }
-      else if(pendingSearch){const job=pendingSearch;pendingSearch=null;activeSearch=job;engine.postMessage('ucinewgame');engine.postMessage('position fen '+job.fen);engine.postMessage('go depth '+job.depth);}
-     }
-     else if(line.startsWith('info ')){handleInfo(line);}
-     else if(line.startsWith('bestmove ')){handleBest(line);}
-     else if(line.startsWith('info string')){setStatus(line.slice(12),'error');}
-    };
-    engine.onerror=e=>fail(new Error('Не удалось запустить Stockfish в Safari. Попробуй Lite или перезагрузи страницу.'));
-    engine.onmessageerror=()=>fail(new Error('Safari не смог прочитать ответ движка. Перезагрузи страницу и попробуй Lite.'));
-    engine.postMessage('uci');
-   }catch(e){fail(e);}
- });
+$('plannerCameraBtn').addEventListener('click',()=>$('plannerCamera').click());
+$('plannerGalleryBtn').addEventListener('click',()=>$('plannerFile').click());
+$('plannerCamera').addEventListener('change',ev=>{const file=ev.target.files&&ev.target.files[0];ev.target.value='';loadPlannerImage(file);});
+$('plannerFile').addEventListener('change',ev=>{const file=ev.target.files&&ev.target.files[0];ev.target.value='';loadPlannerImage(file);});
 }
 function handleInfo(line){
  const d=line.match(/\bdepth (\d+)/);if(d)$('engineDepth').textContent='Stockfish 19 · глубина '+d[1]+' · 1 поток';
+ syncEnginePanelState();
  const sc=line.match(/\bscore (cp|mate) (-?\d+)/),mp=line.match(/\bmultipv (\d+)/),pv=line.match(/\bpv (.+)$/);
  const index=mp?Number(mp[1]):1;
  // Stockfish reports the root score from the side-to-move perspective.
@@ -1092,7 +1034,7 @@ async function analyze(){
   const skillLevel=comebackTrial?4:20;
   $('analyzeBtn').disabled=true;
   await ensureEngine();
-  engineBusy=true;$('analyzeBtn').disabled=true;$('stopBtn').disabled=false;$('playModeSelect').disabled=true;$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';lastPv='';pvLines={};activeSearch=null;clearArrow();
+  engineBusy=true;syncEnginePanelState();$('analyzeBtn').disabled=true;$('stopBtn').disabled=false;$('playModeSelect').disabled=true;$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';lastPv='';pvLines={};activeSearch=null;clearArrow();
   $('pvLine').textContent=comebackTrial?'Comeback: рассчитываю ослабленный, но обдуманный ход…':'Stockfish анализирует позицию…';
   pendingSearch={fen:toFEN(boardState),depth:$('depthSelect').value,multiPv:$('multiPvSelect').value,comebackTrial,skillLevel};
   engine.postMessage('setoption name Threads value 1');
