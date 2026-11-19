@@ -1,0 +1,14 @@
+Stockfish 19
+Copyright (C) the Stockfish developers.
+
+This Windows desktop build includes the official Stockfish 19 universal Windows x86-64 engine.
+Stockfish is licensed under GNU General Public License version 3 or later (GPL-3.0-or-later).
+A copy of the licence is supplied as COPYING.txt.
+
+Corresponding source code:
+https://github.com/official-stockfish/Stockfish/tree/sf_19
+
+Official release:
+https://github.com/official-stockfish/Stockfish/releases/tag/sf_19
+
+The Stockfish engine is a separate component. ChessStudy Pro provides the graphical interface and communicates with the engine through the UCI protocol.
