@@ -307,7 +307,7 @@ html[data-theme="dark"] .import-details>summary{color:#dce5d8}
   .board-top>div:first-child{min-width:0}
   .board-tools{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .board-tools .btn{width:100%;min-width:0;white-space:normal}
-  .board-wrap{width:min(100%,620px);max-width:100%;margin-inline:auto}
+  .board-wrap{width:min(78%,500px);max-width:500px;margin-inline:auto}
   .board{grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr))}
   .head-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;min-width:0;gap:8px}
   .head-controls>*{width:100%;min-width:0}
@@ -574,16 +574,49 @@ function setTheme(theme){
 }
 
 function parseFEN(fen){
- const p=fen.trim().split(/\s+/); if(p.length<4) throw Error('FEN должен содержать минимум 4 поля.');
- const ranks=p[0].split('/'); if(ranks.length!==8) throw Error('В FEN должно быть 8 горизонталей.');
+ if(typeof fen!=='string')throw Error('Позиция FEN должна быть текстом.');
+ const p=fen.trim().split(/\\s+/);
+ if(p.length<4||p.length>6)throw Error('FEN должен содержать от 4 до 6 полей.');
+ const ranks=p[0].split('/');if(ranks.length!==8)throw Error('В FEN должно быть 8 горизонталей.');
  const b=Array(64).fill(null);
- ranks.forEach((rank,r)=>{let c=0; for(const ch of rank){if(/[1-8]/.test(ch)){c+=Number(ch);continue;} if(!/[prnbqkPRNBQK]/.test(ch)||c>7) throw Error('Некорректный символ в FEN.'); b[r*8+c]=ch;c++;} if(c!==8) throw Error('В одной из горизонталей должно быть ровно 8 клеток.');});
- if(!['w','b'].includes(p[1])) throw Error('Цвет хода должен быть w или b.');
- if(p[2]!=='-'&&!/^K?Q?k?q?$/.test(p[2])) throw Error('Некорректные права рокировки.');
- if(p[3]!=='-'&&!/^[a-h][36]$/.test(p[3])) throw Error('Некорректное поле взятия на проходе.');
+ ranks.forEach((rank,r)=>{
+  let c=0;
+  for(const ch of rank){
+   if(/[1-8]/.test(ch)){c+=Number(ch);if(c>8)throw Error('В горизонтали FEN больше восьми клеток.');continue;}
+   if(!/[prnbqkPRNBQK]/.test(ch)||c>7)throw Error('Некорректный символ или длина горизонтали FEN.');
+   if((r===0||r===7)&&ch.toLowerCase()==='p')throw Error('Пешка не может находиться на первой или восьмой горизонтали.');
+   b[r*8+c]=ch;c++;
+  }
+  if(c!==8)throw Error('В одной из горизонталей должно быть ровно 8 клеток.');
+ });
+ if(!['w','b'].includes(p[1]))throw Error('Цвет хода должен быть w или b.');
+ if(p[2]!=='-'&&!/^K?Q?k?q?$/.test(p[2]))throw Error('Некорректные права рокировки.');
+ if(p[3]!=='-'&&!/^[a-h][36]$/.test(p[3]))throw Error('Некорректное поле взятия на проходе.');
+ const half=p[4]===undefined?'0':p[4],full=p[5]===undefined?'1':p[5];
+ if(!/^\\d+$/.test(half)||!Number.isSafeInteger(Number(half)))throw Error('Счётчик полуходов в FEN должен быть неотрицательным целым числом.');
+ if(!/^[1-9]\\d*$/.test(full)||!Number.isSafeInteger(Number(full)))throw Error('Номер полного хода в FEN должен быть положительным целым числом.');
  const wk=b.filter(x=>x==='K').length,bk=b.filter(x=>x==='k').length;
- if(wk!==1||bk!==1) throw Error('Для анализа на доске должны быть ровно два короля — по одному каждого цвета.');
- return {board:b,turn:p[1],castle:p[2],ep:p[3],half:p[4]||'0',full:p[5]||'1'};
+ if(wk!==1||bk!==1)throw Error('Для анализа на доске должны быть ровно два короля — по одному каждого цвета.');
+ if(p[2]!=='-'){
+  const rights=[
+   ['K',60,'K',63,'R'],['Q',60,'K',56,'R'],
+   ['k',4,'k',7,'r'],['q',4,'k',0,'r']
+  ];
+  for(const [right,kingIndex,king,rookIndex,rook] of rights){
+   if(p[2].includes(right)&&(b[kingIndex]!==king||b[rookIndex]!==rook))throw Error('Право рокировки '+right+' указано, но король или ладья не стоят на исходной клетке.');
+  }
+ }
+ if(p[3]!=='-'){
+  const epRank=p[3][1],expectedRank=p[1]==='w'?'6':'3';
+  if(epRank!==expectedRank)throw Error('Поле взятия на проходе не соответствует стороне, которой сейчас ходить.');
+  const epIndex=(8-Number(epRank))*8+(p[3].charCodeAt(0)-97);
+  const pawnIndex=epIndex+(p[1]==='w'?8:-8);
+  const expectedPawn=p[1]==='w'?'p':'P';
+  if(b[epIndex]||b[pawnIndex]!==expectedPawn)throw Error('Некорректное поле взятия на проходе: целевая клетка или пешка не соответствуют FEN.');
+ }
+ const nonMovingSide=p[1]==='w'?'b':'w';
+ if(kingIsInCheck(b,nonMovingSide))throw Error('Некорректная позиция FEN: король стороны, которая уже сходила, не может оставаться под шахом.');
+ return {board:b,turn:p[1],castle:p[2],ep:p[3],half,full};
 }
 function toFEN(s){let rows=[];for(let r=0;r<8;r++){let row='',empty=0;for(let c=0;c<8;c++){let x=s.board[r*8+c];if(!x){empty++;}else{if(empty){row+=empty;empty=0;}row+=x;}}if(empty)row+=empty;rows.push(row);}return `${rows.join('/')} ${s.turn} ${s.castle||'-'} ${s.ep||'-'} ${s.half||0} ${s.full||1}`;}
 function squareName(r,c){return String.fromCharCode(97+c)+(8-r);}
@@ -608,6 +641,7 @@ function getLegalDestinations(from){
  return out;
 }
 function boardClick(r,c){
+ if(engineBusy){setStatus('Сначала дождись окончания анализа или останови его.','loading');return;}
  if(gameEnded)return;
  const idx=r*8+c,piece=boardState.board[idx];
  if(editing){
@@ -869,7 +903,20 @@ function syncEnginePanelState(){
   badge.classList.toggle('is-running',engineBusy);
  }
 function setStatus(msg,type=''){const s=$('status');s.textContent=msg;s.className='status'+(type?' '+type:'');syncEnginePanelState();}
-function resetComebackState(){comebackSide=null;comebackActivated=false;activeSearch=null;pendingSearch=null;updateModeHint();}
+function cancelAnalysis(reason='Анализ остановлен.'){
+ const hadWork=engineBusy||!!activeSearch||!!pendingSearch;
+ if(!hadWork)return;
+ const wasSearching=!!activeSearch;
+ pendingSearch=null;activeSearch=null;
+ if(wasSearching&&engine){try{engine.postMessage('stop');}catch(_){}}
+ engineBusy=false;
+ $('analyzeBtn').disabled=false;$('stopBtn').disabled=true;$('playModeSelect').disabled=false;
+ if(reason)setStatus(reason,'ok');
+}
+function resetComebackState(){
+ cancelAnalysis('Анализ остановлен: изменён режим игры.');
+ comebackSide=null;comebackActivated=false;activeSearch=null;pendingSearch=null;updateModeHint();
+}
 function updateModeHint(){
  const hint=$('modeHint');if(!hint)return;
  if(playMode==='standard'){hint.textContent='Standard: Stockfish 19 анализирует на полной силе. Все остальные настройки работают как раньше.';return;}
@@ -877,7 +924,19 @@ function updateModeHint(){
  if(comebackSide===null){hint.textContent='При первом анализе будет выбрана сторона, которой сейчас ходить. Она начнёт с ослабленной игры (Skill Level 4); когда отставание достигнет примерно 2 пешек, программа пересчитает позицию и перейдёт на полную силу.';return;}
  hint.textContent='Сторона Comeback: '+(comebackSide==='w'?'белые':'чёрные')+'. На её ходах — ослабленная, но рассчитанная игра (Skill Level 4); на ходах соперника — полная сила. При отставании около 2 пешек включится максимальная сила.';
 }
-function setPosition(fen,preserveComeback=false){if(!preserveComeback)resetComebackState();else{activeSearch=null;pendingSearch=null;updateModeHint();}boardState=parseFEN(fen);gameEnded=false;pendingFrom=null;pendingLegalMoves=[];editorUndoStack=[];updateEditorUndoButton();$('fenInput').value=toFEN(boardState);drawBoard();updateGameEndState();$('pvLine').textContent='Позиция загружена. Нажми «Анализировать».';$('moveResult').querySelector('strong')?.remove();$('engineDepth').textContent='Позиция готова';lastBest=null;moveHistory=[];redoHistory=[];updateMoveHistory();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';}
+function setPosition(fen,preserveComeback=false){
+ cancelAnalysis('Анализ остановлен: позиция изменена.');
+ if(!preserveComeback){comebackSide=null;comebackActivated=false;}
+ activeSearch=null;pendingSearch=null;updateModeHint();
+ boardState=parseFEN(fen);gameEnded=false;pendingFrom=null;pendingLegalMoves=[];promotionPending=null;
+ const promotionOverlay=$('promotionOverlay');if(promotionOverlay)promotionOverlay.hidden=true;
+ editorUndoStack=[];updateEditorUndoButton();moveHistory=[];redoHistory=[];pvLines={};lastPv='';
+ $('fenInput').value=toFEN(boardState);
+ $('moveResult').querySelector('strong')?.remove();
+ $('engineDepth').textContent='Позиция готова';$('pvLine').textContent='Позиция загружена. Нажми «Анализировать».';
+ $('playBestBtn').disabled=true;$('playBestBtn').dataset.uci='';$('playBestBtn').textContent='Сделать ход';
+ drawBoard();updateMoveHistory();updateGameEndState();
+}
 function clearArrow(){const a=$('bestArrow');a.setAttribute('opacity','0');lastBest=null;plannerArrow=null;drawPlannerCanvas();}
 function drawArrow(from,to){
  const a=$('bestArrow');let idx=s=>({r:8-Number(s[1]),c:s.charCodeAt(0)-97});let f=idx(from),t=idx(to);let fv=flipped?{r:7-f.r,c:7-f.c}:f,tv=flipped?{r:7-t.r,c:7-t.c}:t;
@@ -1065,6 +1124,7 @@ function undoEditorAction(){
  drawBoard();updateEditorUndoButton();setStatus('Последнее изменение расстановки отменено.','ok');
 }
 function enableEditor(on){
+ if(on)cancelAnalysis('Анализ остановлен: включён редактор.');
  editing=on;
  if(on){pendingFrom=null;pendingLegalMoves=[];gameEnded=false;const overlay=$('gameEndOverlay');if(overlay)overlay.hidden=true;}
  $('editorArea').hidden=!on;
@@ -1123,7 +1183,19 @@ function ensureEngine(){
    }catch(e){fail(e);}
  });
 }
+function renderPvLines(){
+ const output=$('pvLine');if(!output)return;
+ const numbers=Object.keys(pvLines).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
+ if(!numbers.length){output.textContent='Stockfish анализирует позицию…';return;}
+ output.textContent=numbers.map(n=>{
+  const item=pvLines[n],moves=String(item.pv||'').trim().split(/\\s+/).filter(Boolean);
+  const shown=moves.slice(0,18).join(' ');
+  const suffix=moves.length>18?' …':'';
+  return 'Вариант '+n+(item.score?' ('+item.score+')':'')+': '+shown+suffix;
+ }).join('\\n');
+}
 function handleInfo(line){
+ if(!activeSearch)return;
  const d=line.match(/\bdepth (\d+)/);if(d)$('engineDepth').textContent='Stockfish 19 · глубина '+d[1]+' · 1 поток';
  syncEnginePanelState();
  const sc=line.match(/\bscore (cp|mate) (-?\d+)/),mp=line.match(/\bmultipv (\d+)/),pv=line.match(/\bpv (.+)$/);
@@ -1146,12 +1218,13 @@ function handleInfo(line){
  if(pv){
   let evalText='';
   if(sc){if(sc[1]==='mate')evalText='мат '+(Number(sc[2])>0?'через ':'противника через ')+Math.abs(Number(sc[2]));else{let n=Number(sc[2])/100;evalText=(n>0?'+':'')+n.toFixed(2);}}
-  const lineText=pv[1].trim();pvLines[index]={score:evalText,pv:lineText};
+  const lineText=pv[1].trim();pvLines[index]={score:evalText,pv:lineText,depth:d?Number(d[1]):0};
   if(index===1)lastPv=lineText;
-  $('pvLine').textContent='';
+  renderPvLines();
  }
 }
 function handleBest(line){
+ if(!activeSearch)return;
  const m=line.match(/^bestmove ([a-h][1-8])([a-h][1-8])([qrbn])?/);
  if(!m){engineBusy=false;activeSearch=null;$('analyzeBtn').disabled=false;$('stopBtn').disabled=true;$('playModeSelect').disabled=false;updateGameEndState();if(!gameEnded)setStatus('Движок не вернул ход. Возможно, позиция завершена матом или патом.','error');return;}
  // If the weakened phase has reached the target disadvantage, ignore its
@@ -1171,7 +1244,7 @@ function handleBest(line){
  const weakMove=playMode==='comeback'&&!comebackActivated&&comebackSide===boardState.turn;
  let strong=$('moveResult').querySelector('strong');if(!strong){strong=document.createElement('strong');$('moveResult').prepend(strong);}
  strong.textContent=(weakMove?'Ослабленный, но обдуманный ход: ':playMode==='comeback'?'Comeback — сильный ход: ':'Лучший ход: ')+text;
- $('pvLine').textContent='';
+ renderPvLines();
  $('playBestBtn').disabled=false;$('playBestBtn').dataset.uci=from+to+promo;
  $('playBestBtn').textContent=weakMove?'Сделать ход':'Сделать ход';
  if(weakMove)setStatus('Comeback: выбран ослабленный, но рассчитанный ход. После отставания примерно на 2 пешки движок перейдёт на полную силу.','ok');
@@ -1215,7 +1288,7 @@ $('clearBoardBtn').onclick=()=>{
 $('editorUndoBtn').onclick=undoEditorAction;
 $('analyzeBtn').onclick=analyze;
 $('playModeSelect').addEventListener('change',()=>{if(engineBusy)return;playMode=$('playModeSelect').value;resetComebackState();$('playBestBtn').textContent='Применить лучший ход к доске';setStatus(playMode==='comeback'?'Выбран Comeback. Сторона определится по цвету хода при первом анализе.':'Выбран Standard — обычный режим без ослабления.','ok');});
-$('stopBtn').onclick=()=>{if(engine&&engineBusy){pendingSearch=null;activeSearch=null;engine.postMessage('stop');setStatus('Останавливаю анализ…','loading');}};
+$('stopBtn').onclick=()=>cancelAnalysis('Анализ остановлен пользователем.');
 $('playBestBtn').onclick=()=>{try{const uci=$('playBestBtn').dataset.uci||'';if(!uci)throw Error('Сначала найди лучший ход.');applyMoveText(uci);}catch(e){setStatus(e.message,'error');}};
 $('undoMoveBtn').onclick=undoLastMove;
 $('redoMoveBtn').onclick=redoLastMove;
