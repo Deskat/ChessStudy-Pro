@@ -575,7 +575,7 @@ function setPieceSet(value){
  if($('palette'))initPalette();
 }
 
-let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=null, engineReady=false, engineBusy=false, lastBest=null, lastPv='', pvLines={}, pendingSearch=null;
+let boardState=null, flipped=false, editing=false, selectedPiece='P', engine=null, engineReady=false, engineReadyPromise=null, engineBusy=false, lastBest=null, lastPv='', pvLines={}, pendingSearch=null;
 let lastAnimatedMove=null;
 let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated=false, editorUndoStack=[];
 let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow=null;
@@ -1387,20 +1387,20 @@ function enableEditor(on){
 function moveToFen(sq){const from=sq.slice(0,2);return from;}
 function ensureEngine(){
  if(engineReady)return Promise.resolve();
- if(engine)return Promise.resolve();
+ if(engineReadyPromise)return engineReadyPromise;
  const variant=$('engineVariant').value;
  const engineLabel=variant==='lite'?'Stockfish 19 Lite':'Stockfish 19 Full';
  const engineFile=variant==='lite'?'stockfish-19-lite-single.js':'stockfish-19-single.js';
  const engineBase=new URL('./engine/', location.href).href;
  setStatus('Загружаю '+engineLabel+' для iPhone. '+(variant==='lite'?'Загрузка около 1,7 МБ.':'Загрузка около 94 МБ; на медленном интернете это может занять время.'),'loading');
  $('engineVariant').disabled=true;
- return new Promise(async (resolve,reject)=>{
+ engineReadyPromise=new Promise(async (resolve,reject)=>{
    let timer=null, settled=false;
    const cleanup=()=>{if(timer)clearTimeout(timer);};
    const fail=err=>{
     if(settled)return;settled=true;cleanup();
     if(engine){try{engine.terminate();}catch(_){}}
-    engine=null;engineReady=false;
+    engine=null;engineReady=false;engineReadyPromise=null;
     $('engineVariant').disabled=false;
     reject(err instanceof Error?err:new Error(String(err||'Не удалось запустить Stockfish.')));
    };
@@ -1417,7 +1417,7 @@ function ensureEngine(){
      }
      else if(line==='readyok'){
       if(!engineReady){
-       engineReady=true;settled=true;cleanup();
+       engineReady=true;settled=true;cleanup();engineReadyPromise=null;
        setStatus(engineLabel+' готов. Работает на iPhone локально, в 1 поток.','ok');
        $('engineDepth').textContent=engineLabel+' · 1 поток';
        resolve();
@@ -1433,13 +1433,14 @@ function ensureEngine(){
     engine.postMessage('uci');
    }catch(e){fail(e);}
  });
+ return engineReadyPromise;
 }
 function clearMateDistance(){}
 function renderPvLines(){const output=$('pvLine');if(output){output.textContent='';output.hidden=true;}}
 function handleInfo(line){
  if(!activeSearch)return;
  if(activeSearch.kind==='move-review'){
-  const depth=line.match(/\\bdepth (\\d+)/),score=line.match(/\\bscore (cp|mate) (-?\\d+)/);
+  const depth=line.match(/\bdepth (\d+)/),score=line.match(/\bscore (cp|mate) (-?\d+)/);
   if(depth&&score&&!line.includes('lowerbound')&&!line.includes('upperbound')&&Number(depth[1])>=activeSearch.bestDepth){
    activeSearch.bestDepth=Number(depth[1]);activeSearch.score={type:score[1],value:Number(score[2]),depth:Number(depth[1])};
   }
