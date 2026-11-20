@@ -44,50 +44,28 @@ for (const page of pages) {
     }
   });
 
-  const mateHelpers = html.match(/function formatRussianMoveCount\(count\)\{[\s\S]*?\n\}\nfunction mateAnnouncement\(mateScore,sideToMove\)\{[\s\S]*?\n\}/);
-  if (!mateHelpers) {
-    fail(page, 'mate announcement helpers could not be isolated for unit checks');
-  } else {
-    try {
-      const context = {};
-      vm.runInNewContext(mateHelpers[0] + "\nthis.__mateCases = [" +
-        "mateAnnouncement(3, 'w'), mateAnnouncement(-1, 'w'), " +
-        "mateAnnouncement(21, 'b'), mateAnnouncement(14, 'w')" +
-        "];", context);
-      const expected = [
-        'Мат чёрным: через 3 хода',
-        'Мат белым: через 1 ход',
-        'Мат белым: через 21 ход',
-        'Мат чёрным: через 14 ходов'
-      ];
-      if (JSON.stringify(context.__mateCases) !== JSON.stringify(expected)) {
-        fail(page, 'mate side or Russian move-count formatting is incorrect');
-      }
-    } catch (error) {
-      fail(page, 'mate announcement unit check failed: ' + error.message);
-    }
-  }
-
   const required = [
     ['move counter', 'id="moveCount"'],
     ['move history updates the counter', "$('moveCount').textContent='Всего ходов: '+moveHistory.length;"],
     ['analysis cancellation', 'function cancelAnalysis('],
     ['stale engine reply guard', 'if(!activeSearch)return;'],
-    ['visible MultiPV rendering', 'function renderPvLines('],
+    ['hidden analysis variations', "function renderPvLines(){const output=$('pvLine');if(output){output.textContent='';output.hidden=true;}}"],
+    ['move quality display', 'id="moveGrade"'],
+    ['move quality classifier', 'function classifyMoveGrade('],
+    ['move review queue', 'function processMoveReviewQueue('],
+    ['engine-backed move review', "activeSearch.kind==='move-review'"],
     ['promotion choice', 'function openPromotionPicker('],
     ['draw detection', 'function isInsufficientMaterial('],
     ['position repetition key', 'function getPositionKey('],
-    ['mate distance display', 'id="mateDistance"'],
-    ['mate score conversion', 'function mateAnnouncement('],
     ['minimum 20-ply analysis', "depth:Math.max(20,Number($('depthSelect').value)||20)"],
-    ['compact variation output', "return 'Вариант '+n+(item.score?' ('+item.score+')':'');"],
     ['recommended queen promotion', "kind==='q'?' recommended'"]
   ];
   for (const [label, token] of required) {
     if (!html.includes(token)) fail(page, 'missing required feature: ' + label);
   }
 
-  if (!html.includes('.mate-distance{')) fail(page, 'mate distance style is missing');
+  if (html.includes('id="mateDistance"') || html.includes('function mateAnnouncement(')) fail(page, 'mate-in-N output must be removed');
+  if (!html.includes('.move-grade--brilliant') || !html.includes('.move-grade--blunder') || !html.includes('.move-grade--missed')) fail(page, 'move grade colors are missing');
   if (html.includes('.sq.promotion-capture-target') || html.includes('getPromotionCaptureTargets')) {
     fail(page, 'promotion capture highlighting must be fully removed');
   }
@@ -116,9 +94,30 @@ for (const page of pages) {
       };
       vm.runInNewContext(pvRenderer[0], context);
       vm.runInNewContext('renderPvLines();', context);
-      const expected = 'Вариант 1 (-0.10)\nВариант 2 (-0.11)';
-      if (output.textContent !== expected || /[a-h][1-8][a-h][1-8]/.test(output.textContent)) {
-        fail(page, 'PV display must show variant evaluations without move sequences');
+      if (output.textContent !== '' || output.hidden !== true) {
+        fail(page, 'PV panel must stay empty and hidden');
+      }
+      const classifier = html.match(/function classifyMoveGrade\(job,afterEval\)\{[\s\S]*?\n\}/);
+      if (!classifier) fail(page, 'move classifier could not be isolated');
+      else {
+        const ctx = {
+          reviewScoreToCp: score => Number(score.value),
+          reviewExpectedPoints: cp => 1/(1+Math.exp(-Math.LN10*cp/400)),
+          isOpeningBookMove: () => false,
+          isBrilliantSacrifice: () => false,
+          countLegalMovesForReview: () => 20
+        };
+        vm.runInNewContext(classifier[0], ctx);
+        const job = {beforeEval:{type:'cp',value:0},fenBefore:'',side:'w'};
+        const actual = [
+          ctx.classifyMoveGrade(job,{type:'cp',value:0}),
+          ctx.classifyMoveGrade(job,{type:'cp',value:20}),
+          ctx.classifyMoveGrade(job,{type:'cp',value:40}),
+          ctx.classifyMoveGrade(job,{type:'cp',value:100}),
+          ctx.classifyMoveGrade(job,{type:'cp',value:200})
+        ];
+        const expectedGrades = ['best','good','inaccuracy','mistake','blunder'];
+        if (JSON.stringify(actual) !== JSON.stringify(expectedGrades)) fail(page, 'move grade thresholds are incorrect');
       }
     } catch (error) {
       fail(page, 'compact PV rendering unit check failed: ' + error.message);
