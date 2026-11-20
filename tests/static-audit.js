@@ -44,13 +44,13 @@ for (const page of pages) {
     }
   });
 
-  const mateHelpers = html.match(/function formatRussianMoveCount\\(count\\)\\{[\\s\\S]*?\\n\\}\\nfunction mateAnnouncement\\(mateScore,sideToMove\\)\\{[\\s\\S]*?\\n\\}/);
+  const mateHelpers = html.match(/function formatRussianMoveCount\(count\)\{[\s\S]*?\n\}\nfunction mateAnnouncement\(mateScore,sideToMove\)\{[\s\S]*?\n\}/);
   if (!mateHelpers) {
     fail(page, 'mate announcement helpers could not be isolated for unit checks');
   } else {
     try {
       const context = {};
-      vm.runInNewContext(mateHelpers[0] + "\\nthis.__mateCases = [" +
+      vm.runInNewContext(mateHelpers[0] + "\nthis.__mateCases = [" +
         "mateAnnouncement(3, 'w'), mateAnnouncement(-1, 'w'), " +
         "mateAnnouncement(21, 'b'), mateAnnouncement(14, 'w')" +
         "];", context);
@@ -98,7 +98,7 @@ for (const page of pages) {
     fail(page, 'mobile board width override is not constrained');
   }
 
-  const promotionHelper = html.match(/function getPromotionCaptureTargets\\(\\)\\{[\\s\\S]*?\\n\\}/);
+  const promotionHelper = html.match(/function getPromotionCaptureTargets\(\)\{[\s\S]*?\n\}/);
   if (promotionHelper) {
     try {
       const context = {};
@@ -107,7 +107,7 @@ for (const page of pages) {
         "let boardState = {turn:'w', ep:'-', castle:'-', board:Array(64).fill(null)}; " +
         "function legalMoveLeavesKingSafe(){return true;} " +
         promotionHelper[0] +
-        "\\nboardState.board[11]='P'; boardState.board[2]='r'; boardState.board[4]='n'; " +
+        "\nboardState.board[11]='P'; boardState.board[2]='r'; boardState.board[4]='n'; " +
         "this.whiteTargets = [...getPromotionCaptureTargets()].sort((a,b)=>a-b); " +
         "boardState = {turn:'b', ep:'-', castle:'-', board:Array(64).fill(null)}; " +
         "boardState.board[52]='p'; boardState.board[59]='B'; boardState.board[61]='N'; " +
