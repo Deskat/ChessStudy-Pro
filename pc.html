@@ -861,8 +861,7 @@ const MOVE_GRADE_INFO={
  blunder:{label:'Зевок',icon:'??'},missed:{label:'Упущенная победа',icon:'−'},
  pending:{label:'Оцениваю ход…',icon:'…'},unknown:{label:'Оценка недоступна',icon:'—'}
 };
-let moveReviewQueue=[],moveReviewRunning=false;
-let positionEvalCache=new Map([[START_FEN,{type:'cp',value:0,depth:0}]]);
+
 function setMoveGradeUI(kind){
  const output=$('moveGrade');if(!output)return;
  const item=MOVE_GRADE_INFO[kind];
