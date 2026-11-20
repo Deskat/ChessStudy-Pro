@@ -1011,7 +1011,7 @@ function undoLastMove(){
   resetComebackState();
   boardState=parseFEN(last.fenBefore);
   $('fenInput').value=toFEN(boardState);pendingFrom=null;pendingLegalMoves=[];lastBest=null;clearArrow();drawBoard();
-  updateMoveHistory();refreshMoveGradeDisplay();updateGameEndState();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
+  updateMoveHistory();refreshMoveGradeDisplay();if(moveHistory.length&&!moveHistory[moveHistory.length-1].grade)enqueueMoveReview(moveHistory[moveHistory.length-1]);updateGameEndState();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
   setStatus('Ход отменён. Нажми «Вернуть ход», чтобы восстановить его.','ok');
  }catch(e){
   moveHistory.push(last);redoHistory.pop();updateMoveHistory();
@@ -1313,7 +1313,10 @@ function ensureEngine(){
  return engineReadyPromise;
 }
 function clearMateDistance(){}
-function renderPvLines(){const output=$('pvLine');if(output){output.textContent='';output.hidden=true;}}
+function renderPvLines(){
+ const output=$('pvLine');
+ if(output){output.textContent='';output.hidden=true;}
+}
 function handleInfo(line){
  if(!activeSearch)return;
  if(activeSearch.kind==='move-review'){
