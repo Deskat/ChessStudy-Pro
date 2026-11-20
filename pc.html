@@ -862,7 +862,7 @@ function updateMoveHistory(){
 }
 function undoLastMove(){
  if(!moveHistory.length)return;
- const last=moveHistory.pop();
+ const last=moveHistory.pop();clearMateDistance();
  try{
   redoHistory.push(last);
   resetComebackState();
@@ -877,7 +877,7 @@ function undoLastMove(){
 }
 function redoLastMove(){
  if(!redoHistory.length)return;
- const next=redoHistory.pop();
+ const next=redoHistory.pop();clearMateDistance();
  try{
   resetComebackState();
   boardState=parseFEN(next.fenAfter);
@@ -1108,7 +1108,7 @@ function undoEditorAction(){
  setStatus('Последнее изменение расстановки отменено.','ok');
 }
 function enableEditor(on){
- if(on){cancelPromotion();cancelAnalysis('Анализ остановлен: включён редактор.');}
+ if(on){clearMateDistance();cancelPromotion();cancelAnalysis('Анализ остановлен: включён редактор.');}
  editing=on;
  if(on){pendingFrom=null;pendingLegalMoves=[];gameEnded=false;const overlay=$('gameEndOverlay');if(overlay)overlay.hidden=true;}
  $('editorArea').hidden=!on;
