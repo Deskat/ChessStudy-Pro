@@ -79,6 +79,8 @@ for (const page of pages) {
     ['position repetition key', 'function getPositionKey('],
     ['mate distance display', 'id="mateDistance"'],
     ['mate score conversion', 'function mateAnnouncement('],
+    ['minimum 20-ply analysis', "depth:Math.max(20,Number($('depthSelect').value)||20)"],
+    ['compact variation output', "return 'Вариант '+n+(item.score?' ('+item.score+')':'');"],
     ['promotion capture targets', 'function getPromotionCaptureTargets('],
     ['recommended queen promotion', "kind==='q'?' recommended'"]
   ];
@@ -87,7 +89,9 @@ for (const page of pages) {
   }
 
   if (!html.includes('.mate-distance{')) fail(page, 'mate distance style is missing');
-  if (!html.includes('.sq.promotion-capture-target{')) fail(page, 'orange promotion capture highlight is missing');
+  if (html.includes('.sq.promotion-capture-target') || html.includes('getPromotionCaptureTargets')) {
+    fail(page, 'promotion capture highlighting must be fully removed');
+  }
   if (!html.includes('.promotion-choice.recommended{')) fail(page, 'recommended promotion choice highlight is missing');
 
   if (!html.includes('.board-wrap{width:min(78%,500px);max-width:500px')) {
@@ -98,31 +102,27 @@ for (const page of pages) {
     fail(page, 'mobile board width override is not constrained');
   }
 
-  const promotionHelper = html.match(/function getPromotionCaptureTargets\(\)\{[\s\S]*?\n\}/);
-  if (promotionHelper) {
+  const pvRenderer = html.match(/function renderPvLines\(\)\{[\s\S]*?\n\}/);
+  if (!pvRenderer) {
+    fail(page, 'PV renderer could not be isolated for unit checks');
+  } else {
     try {
-      const context = {};
-      vm.runInNewContext(
-        "let editing = false; let gameEnded = false; " +
-        "let boardState = {turn:'w', ep:'-', castle:'-', board:Array(64).fill(null)}; " +
-        "function legalMoveLeavesKingSafe(){return true;} " +
-        promotionHelper[0] +
-        "\nboardState.board[11]='P'; boardState.board[2]='r'; boardState.board[4]='n'; " +
-        "this.whiteTargets = [...getPromotionCaptureTargets()].sort((a,b)=>a-b); " +
-        "boardState = {turn:'b', ep:'-', castle:'-', board:Array(64).fill(null)}; " +
-        "boardState.board[52]='p'; boardState.board[59]='B'; boardState.board[61]='N'; " +
-        "this.blackTargets = [...getPromotionCaptureTargets()].sort((a,b)=>a-b);",
-        context
-      );
-      if (JSON.stringify(context.whiteTargets) !== JSON.stringify([2, 4]) ||
-          JSON.stringify(context.blackTargets) !== JSON.stringify([59, 61])) {
-        fail(page, 'promotion capture targets are incorrect');
+      const output = { textContent: '', hidden: false };
+      const context = {
+        pvLines: {
+          1: { score: '-0.10', pv: 'g8f6 d2d4 e7e6 c2c4 f8e7 g1f3 e8g8 b2b3 b7b6 b1c3' },
+          2: { score: '-0.11', pv: 'e7e6 c2c4 f8e7 b1c3 d7d5 g1f3 g8f6 d2d4 e8g8' }
+        },
+        $: () => output
+      };
+      vm.runInNewContext(pvRenderer[0], context);
+      const expected = 'Вариант 1 (-0.10)\nВариант 2 (-0.11)';
+      if (output.textContent !== expected || /[a-h][1-8][a-h][1-8]/.test(output.textContent)) {
+        fail(page, 'PV display must show variant evaluations without move sequences');
       }
     } catch (error) {
-      fail(page, 'promotion capture target unit check failed: ' + error.message);
+      fail(page, 'compact PV rendering unit check failed: ' + error.message);
     }
-  } else {
-    fail(page, 'promotion capture helper could not be isolated for unit checks');
   }
 
   const functionNames = [...html.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)]
