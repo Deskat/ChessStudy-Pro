@@ -324,11 +324,24 @@ body.pc-version .localtag{display:inline-flex}
 .promotion-choice:hover{border-color:var(--accent)}
 .promotion-cancel{display:block;width:100%;margin-top:10px}
 
-/* Mate distance and promotion choice */
-.mate-distance{margin:0 0 9px;padding:9px 12px;border:1px solid #efc58f;border-left:4px solid #e28a2b;border-radius:10px;background:#fff2df;color:#8b511b;font-size:13px;font-weight:750;letter-spacing:.1px}
-html[data-theme="dark"] .mate-distance{background:#49351f;border-color:#8f612f;border-left-color:#efa34c;color:#ffd49c}
 .promotion-choice.recommended{background:#ffbd73;border:2px solid #df8121;box-shadow:0 0 0 3px rgba(223,129,33,.2)}
 html[data-theme="dark"] .promotion-choice.recommended{background:#75451e;border-color:#f0a34d;box-shadow:0 0 0 3px rgba(240,163,77,.2)}
+.move-grade{display:flex;align-items:center;gap:9px;min-height:38px;margin-top:8px;padding:7px 11px;border:1px solid var(--grade-border);border-radius:11px;background:var(--grade-bg);color:var(--grade-color);font-size:14px;font-weight:700;line-height:1.25}
+.move-grade[hidden]{display:none!important}
+.move-grade-icon{display:inline-grid;place-items:center;flex:0 0 24px;width:24px;height:24px;border-radius:50%;background:var(--grade-color);color:#fff;font-size:11px;font-weight:800;letter-spacing:-.5px}
+.move-grade--brilliant{--grade-color:#19a99f;--grade-bg:#e8f6f4;--grade-border:#c8e9e5}
+.move-grade--great{--grade-color:#6b9fbe;--grade-bg:#edf4f8;--grade-border:#d6e6ef}
+.move-grade--best{--grade-color:#79ad42;--grade-bg:#f0f6e9;--grade-border:#dceacb}
+.move-grade--excellent{--grade-color:#80aa51;--grade-bg:#f1f6e9;--grade-border:#dfeacc}
+.move-grade--good{--grade-color:#87958a;--grade-bg:#f1f3ef;--grade-border:#e1e6df}
+.move-grade--book{--grade-color:#ae9272;--grade-bg:#f7f1e8;--grade-border:#e9ddcc}
+.move-grade--inaccuracy{--grade-color:#d6aa32;--grade-bg:#fbf6e5;--grade-border:#f0e5bc}
+.move-grade--mistake{--grade-color:#d98738;--grade-bg:#fbf0e5;--grade-border:#f0dcc5}
+.move-grade--blunder{--grade-color:#d34f4f;--grade-bg:#faeceb;--grade-border:#efd0ce}
+.move-grade--missed{--grade-color:#c8a324;--grade-bg:#faf5df;--grade-border:#ede2ae}
+.move-grade--pending,.move-grade--unknown{--grade-color:#78847b;--grade-bg:#f2f3ef;--grade-border:#e1e5dd}
+html[data-theme="dark"] .move-grade{background:#2b332b;border-color:var(--grade-color);color:var(--grade-color)}
+html[data-theme="dark"] .move-grade-icon{color:#172017}
 </style>
 </head>
 <body class="pc-version">
@@ -365,7 +378,7 @@ html[data-theme="dark"] .promotion-choice.recommended{background:#75451e;border-
         <button type="button" class="btn" id="redoMoveBtn" disabled>↷ Вернуть ход</button>
       </div>
       <div class="hint">Выбери фигуру и клетку назначения на доске. Кнопки ниже позволяют отменять и возвращать ходы по очереди.</div>
-      <div class="move-result" id="moveResult"><div class="muted small">Лучший ход</div><div class="mate-distance" id="mateDistance" hidden aria-live="polite"></div><div class="pv" id="pvLine">Здесь появится лучший ход.</div>
+      <div class="move-result" id="moveResult"><div class="muted small">Оценка последнего хода</div><div class="move-grade" id="moveGrade" hidden aria-live="polite"></div><div class="pv" id="pvLine" hidden></div>
         <div class="row" style="margin-top:10px"><button type="button" class="btn primary" id="playBestBtn" disabled>Сделать ход</button></div>
       </div>
       <div id="moveHistory" hidden></div>
@@ -472,6 +485,8 @@ let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated
 let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow=null;
 let chessVisionPromise=null, chessVision=null, lastRecognition=null;
 let pendingFrom=null, pendingLegalMoves=[], moveHistory=[], redoHistory=[], gameEnded=false, promotionPending=null;
+let moveReviewQueue=[],moveReviewRunning=false;
+let positionEvalCache=new Map([[START_FEN,{type:'cp',value:0,depth:0}]]);
 const $=id=>document.getElementById(id);
 
 function setTheme(theme){
@@ -652,7 +667,8 @@ function applyBoardMove(from,to,promo=''){
  if(piece==='r'&&fromSq==='a8')removeCastleRight('q');if(piece==='r'&&fromSq==='h8')removeCastleRight('k');
  if(target==='R'&&toSq==='a1')removeCastleRight('Q');if(target==='R'&&toSq==='h1')removeCastleRight('K');
  if(target==='r'&&toSq==='a8')removeCastleRight('q');if(target==='r'&&toSq==='h8')removeCastleRight('k');
- const pawn=piece.toLowerCase()==='p';const oldEp=boardState.ep;boardState.ep='-';
+ const pawn=piece.toLowerCase()==='p';const oldEp=boardState.ep;
+ const capturedPiece=target||(pawn&&oldEp===toSq&&from%8!==to%8?b[Math.floor(from/8)*8+(to%8)]:null);boardState.ep='-';
  if(pawn&&toSq===oldEp&&!target&&from%8!==to%8){const capturedIndex=Math.floor(from/8)*8+(to%8);b[capturedIndex]=null;}
  if((piece==='K'||piece==='k')&&Math.abs((to%8)-(from%8))===2){const row=Math.floor(from/8);if(to%8===6){b[row*8+5]=b[row*8+7];b[row*8+7]=null;}else{b[row*8+3]=b[row*8];b[row*8]=null;}}
  if(pawn&&Math.abs(Math.floor(to/8)-Math.floor(from/8))===2){const epRow=(Math.floor(to/8)+Math.floor(from/8))/2;boardState.ep=String.fromCharCode(97+(from%8))+(8-epRow);}
@@ -662,7 +678,9 @@ function applyBoardMove(from,to,promo=''){
  if(color==='b')boardState.full=String(Number(boardState.full||1)+1);
  boardState.turn=color==='w'?'b':'w';
  const uci=fromSq+toSq+(pawn&&((color==='w'&&Math.floor(to/8)===0)||(color==='b'&&Math.floor(to/8)===7))?(promo||'q').toLowerCase():'');
- redoHistory=[];moveHistory.push({uci,fenBefore,fenAfter:toFEN(boardState)});$('fenInput').value=toFEN(boardState);lastBest=null;pendingFrom=null;pendingLegalMoves=[];clearArrow();drawBoard();updateMoveHistory();$('playBestBtn').disabled=true;setStatus('Ход '+uci+' записан. Теперь ход '+(boardState.turn==='w'?'белых':'чёрных')+'.','ok');updateGameEndState();
+ redoHistory=[];const entry={uci,fenBefore,fenAfter:toFEN(boardState),side,movedPiece:piece,capturedPiece,from,to,grade:null};entry.moveIndex=moveHistory.length;moveHistory.push(entry);$('fenInput').value=toFEN(boardState);lastBest=null;pendingFrom=null;pendingLegalMoves=[];clearArrow();drawBoard();updateMoveHistory();$('playBestBtn').disabled=true;const oldBestLabel=$('moveResult').querySelector('strong');if(oldBestLabel)oldBestLabel.remove();setStatus('Ход '+uci+' записан. Теперь ход '+(boardState.turn==='w'?'белых':'чёрных')+'.','ok');updateGameEndState();
+ if(gameEnded&&kingIsInCheck(boardState.board,boardState.turn)){entry.grade='best';setMoveGradeUI('best');}
+ else enqueueMoveReview(entry);
 }
 function clearRayOnBoard(board,from,to){
  const fr=Math.floor(from/8),fc=from%8,tr=Math.floor(to/8),tc=to%8;
@@ -835,6 +853,150 @@ function updateGameEndState(){
  if(overlay){overlay.hidden=true;overlay.innerHTML='';overlay.classList.remove('mate','draw');}
 }
 function applyMoveText(text){const m=text.trim().toLowerCase().match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);if(!m)throw Error('Введи ход в формате e2e4 или e7e8q.');const sq=m[1]+m[2];const index=s=>((8-Number(s[1]))*8)+(s.charCodeAt(0)-97);applyBoardMove(index(m[1]),index(m[2]),m[3]||'');}
+const MOVE_REVIEW_DEPTH=12;
+const MOVE_GRADE_INFO={
+ brilliant:{label:'Блестящий ход',icon:'!!'},great:{label:'Замечательный ход',icon:'!'},
+ best:{label:'Сильнейший ход',icon:'★'},excellent:{label:'Отлично',icon:'👍'},good:{label:'Хорошо',icon:'✓'},
+ book:{label:'Теоретический ход',icon:'▤'},inaccuracy:{label:'Неточность',icon:'?!'},mistake:{label:'Ошибка',icon:'?'},
+ blunder:{label:'Зевок',icon:'??'},missed:{label:'Упущенная победа',icon:'−'},
+ pending:{label:'Оцениваю ход…',icon:'…'},unknown:{label:'Оценка недоступна',icon:'—'}
+};
+let moveReviewQueue=[],moveReviewRunning=false;
+let positionEvalCache=new Map([[START_FEN,{type:'cp',value:0,depth:0}]]);
+function setMoveGradeUI(kind){
+ const output=$('moveGrade');if(!output)return;
+ const item=MOVE_GRADE_INFO[kind];
+ if(!item){output.hidden=true;output.textContent='';output.className='move-grade';return;}
+ output.hidden=false;output.className='move-grade move-grade--'+kind;
+ output.innerHTML='<span class="move-grade-icon" aria-hidden="true"></span><span class="move-grade-label"></span>';
+ output.querySelector('.move-grade-icon').textContent=item.icon;
+ output.querySelector('.move-grade-label').textContent=item.label;
+ output.setAttribute('aria-label',item.label);
+}
+function clearMoveGradeDisplay(){setMoveGradeUI('');}
+function refreshMoveGradeDisplay(){
+ const last=moveHistory[moveHistory.length-1];
+ if(!last){clearMoveGradeDisplay();return;}
+ if(last.grade)setMoveGradeUI(last.grade);
+ else if(moveReviewQueue.includes(last))setMoveGradeUI('pending');
+ else clearMoveGradeDisplay();
+}
+function reviewScoreToCp(score){
+ if(!score||!Number.isFinite(Number(score.value)))return null;
+ const value=Number(score.value);
+ if(score.type==='mate')return value===0?0:Math.sign(value)*(2000-Math.min(20,Math.abs(value))*25);
+ return Math.max(-2000,Math.min(2000,value));
+}
+function reviewExpectedPoints(cp){return 1/(1+Math.exp(-Math.LN10*cp/400));}
+const OPENING_BOOK_LINES=[
+ ['e2e4','e7e5','g1f3','b8c6','f1b5'],['e2e4','e7e5','g1f3','b8c6','f1c4','f8c5'],
+ ['e2e4','c7c5','g1f3','d7d6','d2d4','c5d4','f3d4'],['e2e4','c7c5','g1f3','b8c6','d2d4','c5d4','f3d4'],
+ ['d2d4','d7d5','c2c4','e7e6','b1c3','g8f6'],['d2d4','g8f6','c2c4','e7e6','b1c3','f8b4'],
+ ['e2e4','e7e6','d2d4','d7d5','b1c3','g8f6'],['e2e4','c7c6','d2d4','d7d5','b1c3','d5e4'],
+ ['c2c4','e7e5','b1c3','g8f6','g2g3','d7d5'],['g1f3','d7d5','d2d4','g8f6','c2c4','e7e6']
+];
+function isOpeningBookMove(job){
+ const prefix=moveHistory.slice(0,job.moveIndex+1).map(move=>move.uci);
+ if(!prefix.length||prefix.length>10)return false;
+ const fullmove=Number(String(job.fenBefore).split(/\s+/)[5]||1);
+ if(fullmove>10)return false;
+ return OPENING_BOOK_LINES.some(line=>prefix.length<=line.length&&prefix.every((move,i)=>line[i]===move));
+}
+function isBrilliantSacrifice(job){
+ if(job.capturedPiece||!job.movedPiece||job.movedPiece.toLowerCase()==='p')return false;
+ const value={n:3,b:3,r:5,q:9,k:100}[job.movedPiece.toLowerCase()]||0;
+ if(value<3)return false;
+ let after;try{after=parseFEN(job.fenAfter);}catch(_){return false;}
+ const opponent=job.side==='w'?'b':'w';let canBeTaken=false;
+ for(let from=0;from<64&&!canBeTaken;from++){
+  const piece=after.board[from];if(!piece)continue;
+  if((piece===piece.toUpperCase())!==(opponent==='w'))continue;
+  if(legalMoveLeavesKingSafe(after.board,from,job.to,opponent,after.ep||'-',after.castle||'-'))canBeTaken=true;
+ }
+ return canBeTaken&&!isSquareAttacked(after.board,job.to,job.side);
+}
+function countLegalMovesForReview(fen,side){
+ let state;try{state=parseFEN(fen);}catch(_){return 99;}
+ let count=0;
+ for(let from=0;from<64;from++){
+  const piece=state.board[from];if(!piece||((piece===piece.toUpperCase())!==(side==='w')))continue;
+  for(let to=0;to<64;to++){
+   if(legalMoveLeavesKingSafe(state.board,from,to,side,state.ep||'-',state.castle||'-')){count++;if(count>2)return count;}
+  }
+ }
+ return count;
+}
+function classifyMoveGrade(job,afterEval){
+ const beforeCp=reviewScoreToCp(job.beforeEval),afterCp=reviewScoreToCp(afterEval);
+ if(beforeCp===null||afterCp===null)return 'unknown';
+ const moverAfterCp=-afterCp,beforeExpected=reviewExpectedPoints(beforeCp),afterExpected=reviewExpectedPoints(moverAfterCp);
+ const loss=Math.max(0,beforeExpected-afterExpected);
+ if(isOpeningBookMove(job))return 'book';
+ if(beforeExpected>=0.88&&afterExpected<=0.68)return 'missed';
+ if(isBrilliantSacrifice(job)&&loss<=0.02&&moverAfterCp>=-40)return 'brilliant';
+ if(loss<=0.05&&(countLegalMovesForReview(job.fenBefore,job.side)===1||(beforeCp<=-250&&moverAfterCp>=-40)))return 'great';
+ if(loss<=0.005)return 'best';
+ if(loss<=0.02)return 'excellent';
+ if(loss<=0.05)return 'good';
+ if(loss<=0.10)return 'inaccuracy';
+ if(loss<=0.20)return 'mistake';
+ return 'blunder';
+}
+function startMoveReviewSearch(job,stage){
+ if(!engineReady||!engine){job.grade='unknown';finishMoveReviewJob(job);return;}
+ const fen=stage==='before'?job.fenBefore:job.fenAfter;
+ activeSearch={kind:'move-review',job,stage,fen,score:null,bestDepth:0};
+ engine.postMessage('setoption name Threads value 1');
+ engine.postMessage('setoption name UCI_LimitStrength value false');
+ engine.postMessage('setoption name Skill Level value 20');
+ engine.postMessage('setoption name MultiPV value 1');
+ engine.postMessage('ucinewgame');engine.postMessage('position fen '+fen);engine.postMessage('go depth '+MOVE_REVIEW_DEPTH);
+}
+function processMoveReviewQueue(){
+ if(moveReviewRunning||!moveReviewQueue.length)return;
+ moveReviewRunning=true;setMoveGradeUI('pending');
+ ensureEngine().then(()=>{
+  if(!moveReviewRunning||!moveReviewQueue.length)return;
+  const job=moveReviewQueue[0];
+  if(positionEvalCache.has(job.fenBefore)){job.beforeEval=positionEvalCache.get(job.fenBefore);startMoveReviewSearch(job,'after');}
+  else startMoveReviewSearch(job,'before');
+ }).catch(error=>{
+  const job=moveReviewQueue[0];
+  if(job){job.grade='unknown';if(job.moveIndex===moveHistory.length-1)setMoveGradeUI('unknown');}
+  moveReviewQueue=[];moveReviewRunning=false;activeSearch=null;
+  setStatus('Не удалось оценить ход: '+(error.message||'Stockfish недоступен.'),'error');
+ });
+}
+function enqueueMoveReview(job){
+ job.moveIndex=moveHistory.indexOf(job);if(job.moveIndex<0)return;
+ moveReviewQueue.push(job);
+ if(job.moveIndex===moveHistory.length-1)setMoveGradeUI('pending');
+ processMoveReviewQueue();
+}
+function finishMoveReviewJob(job){
+ if(moveReviewQueue[0]===job)moveReviewQueue.shift();else moveReviewQueue=moveReviewQueue.filter(item=>item!==job);
+ if(job.moveIndex===moveHistory.length-1&&job.grade)setMoveGradeUI(job.grade);
+ if(moveReviewQueue.length){
+  const next=moveReviewQueue[0];
+  if(positionEvalCache.has(next.fenBefore)){next.beforeEval=positionEvalCache.get(next.fenBefore);startMoveReviewSearch(next,'after');}
+  else startMoveReviewSearch(next,'before');
+ }else{
+  moveReviewRunning=false;
+  if(moveHistory.length&&moveHistory[moveHistory.length-1].grade)setMoveGradeUI(moveHistory[moveHistory.length-1].grade);
+  setStatus('Оценка хода готова.','ok');
+ }
+}
+function finishMoveReviewSearch(){
+ const search=activeSearch;if(!search||search.kind!=='move-review')return;
+ activeSearch=null;const job=search.job,score=search.score;
+ if(!score){job.grade='unknown';if(job.moveIndex===moveHistory.length-1)setMoveGradeUI('unknown');finishMoveReviewJob(job);return;}
+ if(search.stage==='before'){job.beforeEval=score;positionEvalCache.set(job.fenBefore,score);startMoveReviewSearch(job,'after');return;}
+ positionEvalCache.set(job.fenAfter,score);job.grade=classifyMoveGrade(job,score);finishMoveReviewJob(job);
+}
+function cancelMoveReviewQueue(){
+ if(activeSearch&&activeSearch.kind==='move-review'&&engine){try{engine.postMessage('stop');}catch(_){}activeSearch=null;}
+ moveReviewQueue=[];moveReviewRunning=false;
+}
 function updateMoveHistory(){
  $('moveCount').textContent='Всего ходов: '+moveHistory.length;
  $('moveHistory').textContent=moveHistory.length?moveHistory.map((m,i)=>`${Math.floor(i/2)+1}${i%2===0?'.':'...'} ${m.uci}`).join('  '):'Пока ходов нет.';
@@ -849,7 +1011,7 @@ function undoLastMove(){
   resetComebackState();
   boardState=parseFEN(last.fenBefore);
   $('fenInput').value=toFEN(boardState);pendingFrom=null;pendingLegalMoves=[];lastBest=null;clearArrow();drawBoard();
-  updateMoveHistory();updateGameEndState();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
+  updateMoveHistory();refreshMoveGradeDisplay();updateGameEndState();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
   setStatus('Ход отменён. Нажми «Вернуть ход», чтобы восстановить его.','ok');
  }catch(e){
   moveHistory.push(last);redoHistory.pop();updateMoveHistory();
@@ -864,7 +1026,7 @@ function redoLastMove(){
   boardState=parseFEN(next.fenAfter);
   moveHistory.push(next);
   $('fenInput').value=toFEN(boardState);pendingFrom=null;pendingLegalMoves=[];lastBest=null;clearArrow();drawBoard();
-  updateMoveHistory();updateGameEndState();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
+  updateMoveHistory();refreshMoveGradeDisplay();if(!next.grade)enqueueMoveReview(next);updateGameEndState();$('playBestBtn').disabled=true;$('playBestBtn').textContent='Сделать ход';
   setStatus('Отменённый ход восстановлен.','ok');
  }catch(e){
   redoHistory.push(next);updateMoveHistory();
@@ -873,6 +1035,7 @@ function redoLastMove(){
 }
 function setStatus(msg,type=''){const s=$('status');s.textContent=msg;s.className='status'+(type?' '+type:'');}
 function cancelAnalysis(reason='Анализ остановлен.'){
+ if(moveReviewRunning||moveReviewQueue.length)cancelMoveReviewQueue();
  const hadWork=engineBusy||!!activeSearch||!!pendingSearch;
  if(!hadWork)return;
  const wasSearching=!!activeSearch;
@@ -899,10 +1062,10 @@ function setPosition(fen,preserveComeback=false){
  activeSearch=null;pendingSearch=null;updateModeHint();
  boardState=parseFEN(fen);gameEnded=false;pendingFrom=null;pendingLegalMoves=[];promotionPending=null;
  const promotionOverlay=$('promotionOverlay');if(promotionOverlay)promotionOverlay.hidden=true;
- editorUndoStack=[];updateEditorUndoButton();moveHistory=[];redoHistory=[];pvLines={};lastPv='';
+ editorUndoStack=[];updateEditorUndoButton();moveHistory=[];redoHistory=[];pvLines={};lastPv='';positionEvalCache=new Map([[START_FEN,{type:'cp',value:0,depth:0}]]);clearMoveGradeDisplay();
  $('fenInput').value=toFEN(boardState);
  $('moveResult').querySelector('strong')?.remove();
- $('engineDepth').textContent='Позиция готова';$('pvLine').textContent='Позиция загружена. Нажми «Анализировать».';
+ $('engineDepth').textContent='Позиция готова';renderPvLines();
  $('playBestBtn').disabled=true;$('playBestBtn').dataset.uci='';$('playBestBtn').textContent='Сделать ход';
  drawBoard();updateMoveHistory();updateGameEndState();
 }
@@ -1148,40 +1311,17 @@ function ensureEngine(){
    }catch(e){fail(e);}
  });
 }
-function formatRussianMoveCount(count){
- const n=Math.abs(Number(count)),lastTwo=n%100,last=n%10;
- if(last===1&&lastTwo!==11)return 'ход';
- if(last>=2&&last<=4&&(lastTwo<12||lastTwo>14))return 'хода';
- return 'ходов';
-}
-function mateAnnouncement(mateScore,sideToMove){
- const score=Number(mateScore);
- if(!Number.isInteger(score)||score===0||(sideToMove!=='w'&&sideToMove!=='b'))return '';
- const matingSide=score>0?sideToMove:(sideToMove==='w'?'b':'w');
- const matedSide=matingSide==='w'?'b':'w';
- const distance=Math.abs(score);
- return 'Мат '+(matedSide==='w'?'белым':'чёрным')+': через '+distance+' '+formatRussianMoveCount(distance);
-}
-function updateMateDistance(mateScore,fen){
- const output=$('mateDistance');if(!output)return;
- const side=String(fen||'').trim().split(/\s+/)[1]||'';
- const message=mateAnnouncement(mateScore,side);
- output.textContent=message;output.hidden=!message;
-}
-function clearMateDistance(){
- const output=$('mateDistance');if(output){output.textContent='';output.hidden=true;}
-}
-function renderPvLines(){
- const output=$('pvLine');if(!output)return;
- const numbers=Object.keys(pvLines).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
- if(!numbers.length){output.textContent='Stockfish анализирует позицию…';return;}
- output.textContent=numbers.map(n=>{
-  const item=pvLines[n];
-  return 'Вариант '+n+(item.score?' ('+item.score+')':'');
- }).join('\n');
-}
+function clearMateDistance(){}
+function renderPvLines(){const output=$('pvLine');if(output){output.textContent='';output.hidden=true;}}
 function handleInfo(line){
  if(!activeSearch)return;
+ if(activeSearch.kind==='move-review'){
+  const depth=line.match(/\\bdepth (\\d+)/),score=line.match(/\\bscore (cp|mate) (-?\\d+)/);
+  if(depth&&score&&!line.includes('lowerbound')&&!line.includes('upperbound')&&Number(depth[1])>=activeSearch.bestDepth){
+   activeSearch.bestDepth=Number(depth[1]);activeSearch.score={type:score[1],value:Number(score[2]),depth:Number(depth[1])};
+  }
+  return;
+ }
  const d=line.match(/\bdepth (\d+)/);if(d)$('engineDepth').textContent='Stockfish 19 · глубина '+d[1]+' · 1 поток';
  const sc=line.match(/\bscore (cp|mate) (-?\d+)/),mp=line.match(/\bmultipv (\d+)/),pv=line.match(/\bpv (.+)$/);
  const index=mp?Number(mp[1]):1;
@@ -1200,10 +1340,7 @@ function handleInfo(line){
    engine.postMessage('stop');
   }
  }
- if(index===1&&sc&&!line.includes('lowerbound')&&!line.includes('upperbound')&&!activeSearch.switchToStrong){
-  if(sc[1]==='mate')updateMateDistance(sc[2],activeSearch.fen);
-  else clearMateDistance();
- }
+
  if(pv){
   let evalText='';
   if(sc){if(sc[1]==='mate')evalText='мат '+(Number(sc[2])>0?'через ':'противника через ')+Math.abs(Number(sc[2]));else{let n=Number(sc[2])/100;evalText=(n>0?'+':'')+n.toFixed(2);}}
@@ -1214,6 +1351,7 @@ function handleInfo(line){
 }
 function handleBest(line){
  if(!activeSearch)return;
+ if(activeSearch.kind==='move-review'){finishMoveReviewSearch();return;}
  const m=line.match(/^bestmove ([a-h][1-8])([a-h][1-8])([qrbn])?/);
  if(!m){engineBusy=false;activeSearch=null;$('analyzeBtn').disabled=false;$('stopBtn').disabled=true;$('playModeSelect').disabled=false;updateGameEndState();if(!gameEnded)setStatus('Движок не вернул ход. Возможно, позиция завершена матом или патом.','error');return;}
  // If the weakened phase has reached the target disadvantage, ignore its
@@ -1243,6 +1381,7 @@ function handleBest(line){
 }
 async function analyze(){
  try{
+  if(moveReviewRunning){setStatus('Stockfish завершает оценку сыгранных ходов. Подожди немного.','loading');return;}
   clearMateDistance();cancelPromotion();
   if(editing)enableEditor(false);
   boardState=parseFEN($('fenInput').value);$('fenInput').value=toFEN(boardState);drawBoard();
@@ -1252,7 +1391,7 @@ async function analyze(){
   $('analyzeBtn').disabled=true;
   await ensureEngine();
   engineBusy=true;$('analyzeBtn').disabled=true;$('stopBtn').disabled=false;$('playModeSelect').disabled=true;$('playBestBtn').disabled=true;$('playBestBtn').textContent='Применить лучший ход к доске';lastPv='';pvLines={};activeSearch=null;clearArrow();
-  $('pvLine').textContent=comebackTrial?'Comeback: рассчитываю ослабленный, но обдуманный ход…':'Stockfish анализирует позицию…';
+  renderPvLines();
   pendingSearch={fen:toFEN(boardState),depth:Math.max(20,Number($('depthSelect').value)||20),multiPv:$('multiPvSelect').value,comebackTrial,skillLevel};
   engine.postMessage('setoption name Threads value 1');
   engine.postMessage('setoption name Hash value '+$('hashSelect').value);
