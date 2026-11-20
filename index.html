@@ -419,6 +419,11 @@ html[data-theme="dark"] .promotion-choice.recommended{background:#75451e;border-
 .move-grade--pending,.move-grade--unknown{--grade-color:#78847b;--grade-bg:#f2f3ef;--grade-border:#e1e5dd}
 html[data-theme="dark"] .move-grade{background:#2b332b;border-color:var(--grade-color);color:var(--grade-color)}
 html[data-theme="dark"] .move-grade-icon{color:#172017}
+
+/* Mate distance */
+.mate-distance{margin:0 0 9px;padding:9px 12px;border:1px solid #efc58f;border-left:4px solid #e28a2b;border-radius:10px;background:#fff2df;color:#8b511b;font-size:13px;font-weight:750;letter-spacing:.1px}
+.mate-distance[hidden]{display:none!important}
+html[data-theme="dark"] .mate-distance{background:#49351f;border-color:#8f612f;border-left-color:#efa34c;color:#ffd49c}
 </style>
 </head>
 <body>
@@ -461,7 +466,7 @@ html[data-theme="dark"] .move-grade-icon{color:#172017}
         <button type="button" class="btn" id="redoMoveBtn" disabled>↷ Вернуть ход</button>
       </div>
       <div class="hint">Выбери фигуру и клетку назначения на доске. Кнопки ниже позволяют отменять и возвращать ходы по очереди.</div>
-      <div class="move-result" id="moveResult"><div class="muted small">Оценка последнего хода</div><div class="move-grade" id="moveGrade" hidden aria-live="polite"></div><div class="pv" id="pvLine" hidden></div>
+      <div class="move-result" id="moveResult"><div class="muted small">Оценка последнего хода</div><div class="move-grade" id="moveGrade" hidden aria-live="polite"></div><div class="mate-distance" id="mateDistance" hidden aria-live="polite"></div><div class="pv" id="pvLine" hidden></div>
         <div class="row" style="margin-top:10px"><button type="button" class="btn primary" id="playBestBtn" disabled>Сделать ход</button></div>
       </div>
       <div id="moveHistory" hidden></div>
@@ -1434,7 +1439,29 @@ function ensureEngine(){
  });
  return engineReadyPromise;
 }
-function clearMateDistance(){}
+function formatRussianMoveCount(count){
+ const n=Math.abs(Number(count)),lastTwo=n%100,last=n%10;
+ if(last===1&&lastTwo!==11)return 'ход';
+ if(last>=2&&last<=4&&(lastTwo<12||lastTwo>14))return 'хода';
+ return 'ходов';
+}
+function mateAnnouncement(mateScore,sideToMove){
+ const score=Number(mateScore);
+ if(!Number.isInteger(score)||score===0||(sideToMove!=='w'&&sideToMove!=='b'))return '';
+ const matingSide=score>0?sideToMove:(sideToMove==='w'?'b':'w');
+ const matedSide=matingSide==='w'?'b':'w';
+ const distance=Math.abs(score);
+ return 'Мат '+(matedSide==='w'?'белым':'чёрным')+': через '+distance+' '+formatRussianMoveCount(distance);
+}
+function updateMateDistance(mateScore,fen){
+ const output=$('mateDistance');if(!output)return;
+ const side=String(fen||'').trim().split(/\s+/)[1]||'';
+ const message=mateAnnouncement(mateScore,side);
+ output.textContent=message;output.hidden=!message;
+}
+function clearMateDistance(){
+ const output=$('mateDistance');if(output){output.textContent='';output.hidden=true;}
+}
 function renderPvLines(){
  const output=$('pvLine');
  if(output){output.textContent='';output.hidden=true;}
@@ -1442,6 +1469,7 @@ function renderPvLines(){
 function handleInfo(line){
  if(!activeSearch)return;
  if(activeSearch.kind==='move-review'){
+  clearMateDistance();
   const depth=line.match(/\bdepth (\d+)/),score=line.match(/\bscore (cp|mate) (-?\d+)/);
   if(depth&&score&&!line.includes('lowerbound')&&!line.includes('upperbound')&&Number(depth[1])>=activeSearch.bestDepth){
    activeSearch.bestDepth=Number(depth[1]);activeSearch.score={type:score[1],value:Number(score[2]),depth:Number(depth[1])};
@@ -1452,6 +1480,10 @@ function handleInfo(line){
  syncEnginePanelState();
  const sc=line.match(/\bscore (cp|mate) (-?\d+)/),mp=line.match(/\bmultipv (\d+)/),pv=line.match(/\bpv (.+)$/);
  const index=mp?Number(mp[1]):1;
+ if(index===1&&sc&&!line.includes('lowerbound')&&!line.includes('upperbound')&&!activeSearch.switchToStrong){
+  if(sc[1]==='mate')updateMateDistance(sc[2],activeSearch.fen);
+  else clearMateDistance();
+ }
  // Stockfish reports the root score from the side-to-move perspective.
  // Once the Comeback side is clearly behind, stop the weakened search and
  // repeat this same position with Skill Level 20.
