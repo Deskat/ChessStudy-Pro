@@ -44,6 +44,30 @@ for (const page of pages) {
     }
   });
 
+  const mateHelpers = html.match(/function formatRussianMoveCount\\(count\\)\\{[\\s\\S]*?\\n\\}\\nfunction mateAnnouncement\\(mateScore,sideToMove\\)\\{[\\s\\S]*?\\n\\}/);
+  if (!mateHelpers) {
+    fail(page, 'mate announcement helpers could not be isolated for unit checks');
+  } else {
+    try {
+      const context = {};
+      vm.runInNewContext(mateHelpers[0] + "\\nthis.__mateCases = [" +
+        "mateAnnouncement(3, 'w'), mateAnnouncement(-1, 'w'), " +
+        "mateAnnouncement(21, 'b'), mateAnnouncement(14, 'w')" +
+        "];", context);
+      const expected = [
+        'Мат чёрным: через 3 хода',
+        'Мат белым: через 1 ход',
+        'Мат белым: через 21 ход',
+        'Мат чёрным: через 14 ходов'
+      ];
+      if (JSON.stringify(context.__mateCases) !== JSON.stringify(expected)) {
+        fail(page, 'mate side or Russian move-count formatting is incorrect');
+      }
+    } catch (error) {
+      fail(page, 'mate announcement unit check failed: ' + error.message);
+    }
+  }
+
   const required = [
     ['move counter', 'id="moveCount"'],
     ['move history updates the counter', "$('moveCount').textContent='Всего ходов: '+moveHistory.length;"],
@@ -72,6 +96,33 @@ for (const page of pages) {
   if (page === 'index.html' &&
       !html.includes('.board-wrap{width:min(78%,500px);max-width:500px;margin-inline:auto}')) {
     fail(page, 'mobile board width override is not constrained');
+  }
+
+  const promotionHelper = html.match(/function getPromotionCaptureTargets\\(\\)\\{[\\s\\S]*?\\n\\}/);
+  if (promotionHelper) {
+    try {
+      const context = {};
+      vm.runInNewContext(
+        "let editing = false; let gameEnded = false; " +
+        "let boardState = {turn:'w', ep:'-', castle:'-', board:Array(64).fill(null)}; " +
+        "function legalMoveLeavesKingSafe(){return true;} " +
+        promotionHelper[0] +
+        "\\nboardState.board[11]='P'; boardState.board[2]='r'; boardState.board[4]='n'; " +
+        "this.whiteTargets = [...getPromotionCaptureTargets()].sort((a,b)=>a-b); " +
+        "boardState = {turn:'b', ep:'-', castle:'-', board:Array(64).fill(null)}; " +
+        "boardState.board[52]='p'; boardState.board[59]='B'; boardState.board[61]='N'; " +
+        "this.blackTargets = [...getPromotionCaptureTargets()].sort((a,b)=>a-b);",
+        context
+      );
+      if (JSON.stringify(context.whiteTargets) !== JSON.stringify([2, 4]) ||
+          JSON.stringify(context.blackTargets) !== JSON.stringify([59, 61])) {
+        fail(page, 'promotion capture targets are incorrect');
+      }
+    } catch (error) {
+      fail(page, 'promotion capture target unit check failed: ' + error.message);
+    }
+  } else {
+    fail(page, 'promotion capture helper could not be isolated for unit checks');
   }
 
   const functionNames = [...html.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)]
