@@ -568,6 +568,8 @@ let activeSearch=null, playMode='standard', comebackSide=null, comebackActivated
 let plannerImage=null, plannerCorners=[], plannerCalibrating=false, plannerArrow=null;
 let chessVisionPromise=null, chessVision=null, lastRecognition=null;
 let pendingFrom=null, pendingLegalMoves=[], moveHistory=[], redoHistory=[], gameEnded=false, promotionPending=null;
+let moveReviewQueue=[],moveReviewRunning=false;
+let positionEvalCache=new Map([[START_FEN,{type:'cp',value:0,depth:0}]]);
 const $=id=>document.getElementById(id);
 
 function setBoardTheme(theme){
@@ -940,6 +942,151 @@ function updateGameEndState(){
  if(overlay){overlay.hidden=true;overlay.innerHTML='';overlay.classList.remove('mate','draw');}
 }
 function applyMoveText(text){const m=text.trim().toLowerCase().match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);if(!m)throw Error('Введи ход в формате e2e4 или e7e8q.');const sq=m[1]+m[2];const index=s=>((8-Number(s[1]))*8)+(s.charCodeAt(0)-97);applyBoardMove(index(m[1]),index(m[2]),m[3]||'');}
+const MOVE_REVIEW_DEPTH=12;
+const MOVE_GRADE_INFO={
+ brilliant:{label:'Блестящий ход',icon:'!!'},great:{label:'Замечательный ход',icon:'!'},
+ best:{label:'Сильнейший ход',icon:'★'},excellent:{label:'Отлично',icon:'👍'},good:{label:'Хорошо',icon:'✓'},
+ book:{label:'Теоретический ход',icon:'▤'},inaccuracy:{label:'Неточность',icon:'?!'},mistake:{label:'Ошибка',icon:'?'},
+ blunder:{label:'Зевок',icon:'??'},missed:{label:'Упущенная победа',icon:'−'},
+ pending:{label:'Оцениваю ход…',icon:'…'},unknown:{label:'Оценка недоступна',icon:'—'}
+};
+let moveReviewQueue=[],moveReviewRunning=false;
+let positionEvalCache=new Map([[START_FEN,{type:'cp',value:0,depth:0}]]);
+function setMoveGradeUI(kind){
+ const output=$('moveGrade');if(!output)return;
+ const item=MOVE_GRADE_INFO[kind];
+ if(!item){output.hidden=true;output.textContent='';output.className='move-grade';return;}
+ output.hidden=false;output.className='move-grade move-grade--'+kind;
+ output.innerHTML='<span class="move-grade-icon" aria-hidden="true"></span><span class="move-grade-label"></span>';
+ output.querySelector('.move-grade-icon').textContent=item.icon;
+ output.querySelector('.move-grade-label').textContent=item.label;
+ output.setAttribute('aria-label',item.label);
+}
+function clearMoveGradeDisplay(){setMoveGradeUI('');}
+function refreshMoveGradeDisplay(){
+ const last=moveHistory[moveHistory.length-1];
+ if(!last){clearMoveGradeDisplay();return;}
+ if(last.grade)setMoveGradeUI(last.grade);
+ else if(moveReviewQueue.includes(last))setMoveGradeUI('pending');
+ else clearMoveGradeDisplay();
+}
+function reviewScoreToCp(score){
+ if(!score||!Number.isFinite(Number(score.value)))return null;
+ const value=Number(score.value);
+ if(score.type==='mate')return value===0?0:Math.sign(value)*(2000-Math.min(20,Math.abs(value))*25);
+ return Math.max(-2000,Math.min(2000,value));
+}
+function reviewExpectedPoints(cp){return 1/(1+Math.exp(-Math.LN10*cp/400));}
+const OPENING_BOOK_LINES=[
+ ['e2e4','e7e5','g1f3','b8c6','f1b5'],['e2e4','e7e5','g1f3','b8c6','f1c4','f8c5'],
+ ['e2e4','c7c5','g1f3','d7d6','d2d4','c5d4','f3d4'],['e2e4','c7c5','g1f3','b8c6','d2d4','c5d4','f3d4'],
+ ['d2d4','d7d5','c2c4','e7e6','b1c3','g8f6'],['d2d4','g8f6','c2c4','e7e6','b1c3','f8b4'],
+ ['e2e4','e7e6','d2d4','d7d5','b1c3','g8f6'],['e2e4','c7c6','d2d4','d7d5','b1c3','d5e4'],
+ ['c2c4','e7e5','b1c3','g8f6','g2g3','d7d5'],['g1f3','d7d5','d2d4','g8f6','c2c4','e7e6']
+];
+function isOpeningBookMove(job){
+ const prefix=moveHistory.slice(0,job.moveIndex+1).map(move=>move.uci);
+ if(!prefix.length||prefix.length>10)return false;
+ const fullmove=Number(String(job.fenBefore).split(/\s+/)[5]||1);
+ if(fullmove>10)return false;
+ return OPENING_BOOK_LINES.some(line=>prefix.length<=line.length&&prefix.every((move,i)=>line[i]===move));
+}
+function isBrilliantSacrifice(job){
+ if(job.capturedPiece||!job.movedPiece||job.movedPiece.toLowerCase()==='p')return false;
+ const value={n:3,b:3,r:5,q:9,k:100}[job.movedPiece.toLowerCase()]||0;
+ if(value<3)return false;
+ let after;try{after=parseFEN(job.fenAfter);}catch(_){return false;}
+ const opponent=job.side==='w'?'b':'w';let canBeTaken=false;
+ for(let from=0;from<64&&!canBeTaken;from++){
+  const piece=after.board[from];if(!piece)continue;
+  if((piece===piece.toUpperCase())!==(opponent==='w'))continue;
+  if(legalMoveLeavesKingSafe(after.board,from,job.to,opponent,after.ep||'-',after.castle||'-'))canBeTaken=true;
+ }
+ return canBeTaken&&!isSquareAttacked(after.board,job.to,job.side);
+}
+function countLegalMovesForReview(fen,side){
+ let state;try{state=parseFEN(fen);}catch(_){return 99;}
+ let count=0;
+ for(let from=0;from<64;from++){
+  const piece=state.board[from];if(!piece||((piece===piece.toUpperCase())!==(side==='w')))continue;
+  for(let to=0;to<64;to++){
+   if(legalMoveLeavesKingSafe(state.board,from,to,side,state.ep||'-',state.castle||'-')){count++;if(count>2)return count;}
+  }
+ }
+ return count;
+}
+function classifyMoveGrade(job,afterEval){
+ const beforeCp=reviewScoreToCp(job.beforeEval),afterCp=reviewScoreToCp(afterEval);
+ if(beforeCp===null||afterCp===null)return 'unknown';
+ const moverAfterCp=-afterCp,beforeExpected=reviewExpectedPoints(beforeCp),afterExpected=reviewExpectedPoints(moverAfterCp);
+ const loss=Math.max(0,beforeExpected-afterExpected);
+ if(isOpeningBookMove(job))return 'book';
+ if(beforeExpected>=0.88&&afterExpected<=0.68)return 'missed';
+ if(isBrilliantSacrifice(job)&&loss<=0.02&&moverAfterCp>=-40)return 'brilliant';
+ if(loss<=0.05&&(countLegalMovesForReview(job.fenBefore,job.side)===1||(beforeCp<=-250&&moverAfterCp>=-40)))return 'great';
+ if(loss<=0.005)return 'best';
+ if(loss<=0.02)return 'excellent';
+ if(loss<=0.05)return 'good';
+ if(loss<=0.10)return 'inaccuracy';
+ if(loss<=0.20)return 'mistake';
+ return 'blunder';
+}
+function startMoveReviewSearch(job,stage){
+ if(!engineReady||!engine){job.grade='unknown';finishMoveReviewJob(job);return;}
+ const fen=stage==='before'?job.fenBefore:job.fenAfter;
+ activeSearch={kind:'move-review',job,stage,fen,score:null,bestDepth:0};
+ engine.postMessage('setoption name Threads value 1');
+ engine.postMessage('setoption name UCI_LimitStrength value false');
+ engine.postMessage('setoption name Skill Level value 20');
+ engine.postMessage('setoption name MultiPV value 1');
+ engine.postMessage('ucinewgame');engine.postMessage('position fen '+fen);engine.postMessage('go depth '+MOVE_REVIEW_DEPTH);
+}
+function processMoveReviewQueue(){
+ if(moveReviewRunning||!moveReviewQueue.length)return;
+ moveReviewRunning=true;setMoveGradeUI('pending');
+ ensureEngine().then(()=>{
+  if(!moveReviewRunning||!moveReviewQueue.length)return;
+  const job=moveReviewQueue[0];
+  if(positionEvalCache.has(job.fenBefore)){job.beforeEval=positionEvalCache.get(job.fenBefore);startMoveReviewSearch(job,'after');}
+  else startMoveReviewSearch(job,'before');
+ }).catch(error=>{
+  const job=moveReviewQueue[0];
+  if(job){job.grade='unknown';if(job.moveIndex===moveHistory.length-1)setMoveGradeUI('unknown');}
+  moveReviewQueue=[];moveReviewRunning=false;activeSearch=null;
+  setStatus('Не удалось оценить ход: '+(error.message||'Stockfish недоступен.'),'error');
+ });
+}
+function enqueueMoveReview(job){
+ job.moveIndex=moveHistory.indexOf(job);if(job.moveIndex<0)return;
+ moveReviewQueue.push(job);
+ if(job.moveIndex===moveHistory.length-1)setMoveGradeUI('pending');
+ processMoveReviewQueue();
+}
+function finishMoveReviewJob(job){
+ if(moveReviewQueue[0]===job)moveReviewQueue.shift();else moveReviewQueue=moveReviewQueue.filter(item=>item!==job);
+ if(job.moveIndex===moveHistory.length-1&&job.grade)setMoveGradeUI(job.grade);
+ if(moveReviewQueue.length){
+  const next=moveReviewQueue[0];
+  if(positionEvalCache.has(next.fenBefore)){next.beforeEval=positionEvalCache.get(next.fenBefore);startMoveReviewSearch(next,'after');}
+  else startMoveReviewSearch(next,'before');
+ }else{
+  moveReviewRunning=false;
+  if(moveHistory.length&&moveHistory[moveHistory.length-1].grade)setMoveGradeUI(moveHistory[moveHistory.length-1].grade);
+  setStatus('Оценка хода готова.','ok');
+ }
+}
+function finishMoveReviewSearch(){
+ const search=activeSearch;if(!search||search.kind!=='move-review')return;
+ activeSearch=null;const job=search.job,score=search.score;
+ if(!score){job.grade='unknown';if(job.moveIndex===moveHistory.length-1)setMoveGradeUI('unknown');finishMoveReviewJob(job);return;}
+ if(search.stage==='before'){job.beforeEval=score;positionEvalCache.set(job.fenBefore,score);startMoveReviewSearch(job,'after');return;}
+ positionEvalCache.set(job.fenAfter,score);job.grade=classifyMoveGrade(job,score);finishMoveReviewJob(job);
+}
+function cancelMoveReviewQueue(){
+ if(activeSearch&&activeSearch.kind==='move-review'&&engine){try{engine.postMessage('stop');}catch(_){}activeSearch=null;}
+ moveReviewQueue=[];moveReviewRunning=false;
+}
+
 function updateMoveHistory(){
  $('moveCount').textContent='Всего ходов: '+moveHistory.length;
  $('moveHistory').textContent=moveHistory.length?moveHistory.map((m,i)=>`${Math.floor(i/2)+1}${i%2===0?'.':'...'} ${m.uci}`).join('  '):'Пока ходов нет.';
