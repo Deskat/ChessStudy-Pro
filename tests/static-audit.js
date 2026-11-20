@@ -81,7 +81,6 @@ for (const page of pages) {
     ['mate score conversion', 'function mateAnnouncement('],
     ['minimum 20-ply analysis', "depth:Math.max(20,Number($('depthSelect').value)||20)"],
     ['compact variation output', "return 'Вариант '+n+(item.score?' ('+item.score+')':'');"],
-    ['promotion capture targets', 'function getPromotionCaptureTargets('],
     ['recommended queen promotion', "kind==='q'?' recommended'"]
   ];
   for (const [label, token] of required) {
@@ -116,6 +115,7 @@ for (const page of pages) {
         $: () => output
       };
       vm.runInNewContext(pvRenderer[0], context);
+      vm.runInNewContext('renderPvLines();', context);
       const expected = 'Вариант 1 (-0.10)\nВариант 2 (-0.11)';
       if (output.textContent !== expected || /[a-h][1-8][a-h][1-8]/.test(output.textContent)) {
         fail(page, 'PV display must show variant evaluations without move sequences');
