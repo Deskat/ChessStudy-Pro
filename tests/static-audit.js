@@ -49,7 +49,7 @@ for (const page of pages) {
     ['move history updates the counter', "$('moveCount').textContent='Всего ходов: '+moveHistory.length;"],
     ['analysis cancellation', 'function cancelAnalysis('],
     ['stale engine reply guard', 'if(!activeSearch)return;'],
-    ['hidden analysis variations', "function renderPvLines(){const output=$('pvLine');if(output){output.textContent='';output.hidden=true;}}"],
+    ['hidden analysis variations', "function renderPvLines(){\n const output=$('pvLine');\n if(output){output.textContent='';output.hidden=true;}\n}"],
     ['move quality display', 'id="moveGrade"'],
     ['move quality classifier', 'function classifyMoveGrade('],
     ['move review queue', 'function processMoveReviewQueue('],
