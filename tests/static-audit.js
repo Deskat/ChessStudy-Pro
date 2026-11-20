@@ -52,11 +52,19 @@ for (const page of pages) {
     ['visible MultiPV rendering', 'function renderPvLines('],
     ['promotion choice', 'function openPromotionPicker('],
     ['draw detection', 'function isInsufficientMaterial('],
-    ['position repetition key', 'function getPositionKey(']
+    ['position repetition key', 'function getPositionKey('],
+    ['mate distance display', 'id="mateDistance"'],
+    ['mate score conversion', 'function mateAnnouncement('],
+    ['promotion capture targets', 'function getPromotionCaptureTargets('],
+    ['recommended queen promotion', "kind==='q'?' recommended'"]
   ];
   for (const [label, token] of required) {
     if (!html.includes(token)) fail(page, 'missing required feature: ' + label);
   }
+
+  if (!html.includes('.mate-distance{')) fail(page, 'mate distance style is missing');
+  if (!html.includes('.sq.promotion-capture-target{')) fail(page, 'orange promotion capture highlight is missing');
+  if (!html.includes('.promotion-choice.recommended{')) fail(page, 'recommended promotion choice highlight is missing');
 
   if (!html.includes('.board-wrap{width:min(78%,500px);max-width:500px')) {
     fail(page, 'board width rule is missing');
